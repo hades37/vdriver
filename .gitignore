@@ -1,0 +1,13 @@
+# 构建产物
+build/
+lib/
+*.o
+*.a
+*.so
+*.so.*
+
+# 编辑器/系统
+.vscode/
+.idea/
+*.swp
+.DS_Store
