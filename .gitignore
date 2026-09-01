@@ -1,10 +1,12 @@
 # 构建产物
-build/
-lib/
+/build/
+/lib/
 *.o
 *.a
 *.so
 *.so.*
+compile_commands.json
+Testing/
 
 # 编辑器/系统
 .vscode/
