@@ -53,8 +53,8 @@ data:
       enable_thinking: false
       train_on_prompt: false
       mask_history: false
-      dataset_dir: /tmp/mock_kimi
-      dataset: &DATASET_PATH /tmp/mock_kimi/mock_data_pic_num_1_textlen_128.json
+      dataset_dir: /mnt/e/ubuntu-workspace/CANN/vdriver/tests/mm_kimi/mock_data
+      dataset: &DATASET_PATH /mnt/e/ubuntu-workspace/CANN/vdriver/tests/mm_kimi/mock_data/mock_data_pic_num_1_textlen_128.json
       cache_dir: ./cache_dir_kimi_vdriver/
       overwrite_cache: true
       preprocess_on_fly: true

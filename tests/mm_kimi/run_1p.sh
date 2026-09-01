@@ -22,6 +22,9 @@ export CPU_AFFINITY_CONF=0
 export HCCL_CONNECT_TIMEOUT=1200
 export VDRIVER_LOG="${VDRIVER_LOG:-1}"
 
+# 0) 自愈 /tmp 垫片(标准 triton + vdriver 后端 + cann 占位)
+bash "${VD_ROOT}/tests/mm_kimi/setup_shim.sh" > /dev/null
+
 mkdir -p "${VD_ROOT}/tests/mm_kimi/logs"
 LOG="${VD_ROOT}/tests/mm_kimi/logs/train_1p_$(date +%H%M%S).log"
 
