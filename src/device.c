@@ -19,14 +19,21 @@
 #include <string.h>
 
 /* ---------------- 日志 ---------------- */
+/* VDRIVER_LOG: 1=关键决策日志; 2=追加 SQE hex-dump 等详单 */
+static atomic_int log_level_cached = -1;
+
+static int LogLevel(void)
+{
+    if (atomic_load(&log_level_cached) < 0) {
+        const char *env = getenv("VDRIVER_LOG");
+        atomic_store(&log_level_cached, (env != NULL) ? atoi(env) : 0);
+    }
+    return atomic_load(&log_level_cached);
+}
+
 void vdriver_debug_log(const char *fmt, ...)
 {
-    static atomic_int enabled = -1;
-    if (atomic_load(&enabled) < 0) {
-        const char *env = getenv("VDRIVER_LOG");
-        atomic_store(&enabled, (env != NULL && env[0] == '1') ? 1 : 0);
-    }
-    if (atomic_load(&enabled) == 0) {
+    if (LogLevel() < 1) {
         return;
     }
     va_list ap;
@@ -35,6 +42,11 @@ void vdriver_debug_log(const char *fmt, ...)
     (void)vfprintf(stderr, fmt, ap);
     (void)fprintf(stderr, "\n");
     va_end(ap);
+}
+
+int vdriver_debug_level(void)
+{
+    return LogLevel();
 }
 
 /* ---------------- 设备状态 ---------------- */
@@ -89,8 +101,11 @@ DLLEXPORT drvError_t halGetDeviceInfo(uint32_t devId, int32_t moduleType,
                     break;
                 case INFO_TYPE_VERSION:      /* 硬件版本字:SoC 名走 halGetSocVersion,此处 0 即可 */
                     break;
-                case INFO_TYPE_CORE_NUM:     /* 与 AICORE 口径一致,避免兜底路径偏差 */
-                    *value = VDRIVER_DEF_AICORE_NUM;
+                case INFO_TYPE_CORE_NUM:
+                    /* 语义陷阱(M3 实测抓到):SYSTEM/CORE_NUM 被 runtime 当 tsNumber
+                     * (TS 调度组数,合法 [1,2],runtime.cc:774-784),不是 AI 核数;
+                     * AI 核数走 MODULE_TYPE_AICORE/INFO_TYPE_CORE_NUM */
+                    *value = 2;
                     break;
                 case INFO_TYPE_ADDR_MODE:    /* D4: UNIFIED(flat),命中 RUNTIME_WHEN_NO_VIRTUAL_MODEL_RETURN */
                     *value = (int64_t)ADDR_MODE_UNIFIED;
@@ -104,7 +119,12 @@ DLLEXPORT drvError_t halGetDeviceInfo(uint32_t devId, int32_t moduleType,
             break;
         case MODULE_TYPE_AICORE:
             if (infoType == INFO_TYPE_CORE_NUM) {
-                *value = VDRIVER_DEF_AICORE_NUM;
+                *value = VDRIVER_DEF_AICORE_NUM; /* runtime 亦把 CUBE_NUM 重映射到此(api_impl.cc:3621) */
+            }
+            break;
+        case MODULE_TYPE_VECTOR_CORE:
+            if (infoType == INFO_TYPE_CORE_NUM) {
+                *value = VDRIVER_DEF_VECTOR_CORE_NUM; /* 自动 tiling 需要向量核数(启动日志 vecCoreCnt) */
             }
             break;
         case MODULE_TYPE_AICPU:

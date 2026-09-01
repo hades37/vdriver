@@ -15,6 +15,7 @@
 #include "ascend_hal.h"
 
 #include <pthread.h>
+#include <stdio.h>
 #include <string.h>
 
 #define VD_MAX_SQCQ 64U /* 同时存在的 SQ/CQ 数上限 */
@@ -27,6 +28,8 @@ typedef struct {
     uint32_t sqe_depth;
     uint32_t head; /* 已消费(TS 执行完) */
     uint32_t tail; /* 已生产(runtime 写入) */
+    uint8_t *ring; /* host SQ 环(SQ_REG_BASE 应答用;某些路径 runtime 直接写环) */
+    uint32_t ring_len;
 } vd_sq_t;
 
 typedef struct {
@@ -94,6 +97,15 @@ DLLEXPORT drvError_t halSqCqAllocate(uint32_t devId, struct halSqCqInputInfo *in
     sq->ts_id = in->tsId;
     sq->sqe_size = (in->sqeSize != 0U) ? in->sqeSize : 64U; /* normal: 64B(trs_pkg.h) */
     sq->sqe_depth = (in->sqeDepth != 0U) ? in->sqeDepth : 1024U;
+    /* SQ 环内存:GetSqRegVirtualAddrBySqid(npu_driver_res.cc:1104)要求非 0 地址 */
+    sq->ring_len = sq->sqe_depth * sq->sqe_size;
+    sq->ring = (uint8_t *)malloc(sq->ring_len);
+    if (sq->ring == NULL) {
+        sq->in_use = 0;
+        pthread_mutex_unlock(&g_sqcq_lock);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    (void)memset(sq->ring, 0, sq->ring_len);
 
     vd_cq_t *cq = &g_cq_table[cq_id];
     (void)memset(cq, 0, sizeof(*cq));
@@ -120,6 +132,9 @@ DLLEXPORT drvError_t halSqCqFree(uint32_t devId, struct halSqCqFreeInfo *info)
     vd_sq_t *sq = GetSqLocked(info->sqId, (uint32_t)info->type, info->tsId);
     if (sq != NULL) {
         sq->in_use = 0;
+        free(sq->ring); /* 释放 SQ 环 */
+        sq->ring = NULL;
+        sq->ring_len = 0U;
     }
     /* flag bit0=0 表示要释放 cq(trs_pkg.h halSqCqFreeInfo 注释) */
     if ((info->flag & 0x1U) == 0U && info->cqId < VD_MAX_SQCQ) {
@@ -154,6 +169,20 @@ DLLEXPORT drvError_t halSqCqQuery(uint32_t devId, struct halSqCqQueryInfo *info)
         case DRV_SQCQ_PROP_SQ_CQE_STATUS: /* read clear:无 CQE,恒 0 */
             info->value[0] = 0U;
             break;
+        case DRV_SQCQ_PROP_SQ_REG_BASE:
+            /* GetSqRegVirtualAddrBySqid(npu_driver_res.cc:1096-1120):
+             * value[0]=高 32 位, value[1]=低 32 位, value[2]=长度 */
+            if (sq != NULL && sq->ring != NULL) {
+                const uint64_t addr = (uint64_t)(uintptr_t)sq->ring;
+                info->value[0] = (uint32_t)(addr >> 32U);
+                info->value[1] = (uint32_t)(addr & 0xFFFFFFFFULL);
+                info->value[2] = sq->ring_len;
+            } else {
+                info->value[0] = 0U;
+                info->value[1] = 0U;
+                info->value[2] = 0U;
+            }
+            break;
         case DRV_SQCQ_PROP_SQ_DEPTH:
             info->value[0] = (sq != NULL) ? sq->sqe_depth : 0U;
             break;
@@ -176,13 +205,18 @@ DLLEXPORT drvError_t halSqCqConfig(uint32_t devId, struct halSqCqConfigInfo *inf
     }
     pthread_mutex_lock(&g_sqcq_lock);
     if (info->prop == DRV_SQCQ_PROP_SQ_HEAD) {
-        /* SetSqHead(npu_driver_res.cc:830):销毁/复用时把 head 拉回指定位置 */
+        /* SetSqHead(npu_driver_res.cc:830):销毁/复用时把 head 拉回指定位置;
+         * M2 评审建议④:mock 下 head=tail 同步回拉,避免 head<tail 的未定语义 */
         vd_sq_t *sq = GetSqLocked(info->sqId, (uint32_t)info->type, info->tsId);
         if (sq != NULL) {
             sq->head = info->value[0] & 0xFFFFU;
+            sq->tail = sq->head;
         }
+    } else if (info->prop != DRV_SQCQ_PROP_SQ_PAUSE &&
+               info->prop != DRV_SQCQ_PROP_SQ_RESUME &&
+               info->prop != DRV_SQCQ_PROP_SQ_DISABLE_TO_ENABLE) {
+        vdriver_debug_log("halSqCqConfig: 未实现的 prop=%d 已忽略", (int)info->prop);
     }
-    /* SQ_PAUSE/SQ_RESUME/SQ_DISABLE_TO_ENABLE:mock 下无实际效果 */
     pthread_mutex_unlock(&g_sqcq_lock);
     return DRV_ERROR_NONE;
 }
@@ -196,6 +230,10 @@ DLLEXPORT drvError_t halSqTaskSend(uint32_t devId, struct halTaskSendInfo *info)
     if (info == NULL || info->sqe_addr == NULL) {
         return DRV_ERROR_INVALID_VALUE;
     }
+    if (info->sqe_num == 0U || info->sqe_num > 1024U) {
+        vdriver_debug_log("halSqTaskSend: 非法 sqe_num=%u", info->sqe_num);
+        return DRV_ERROR_INVALID_VALUE; /* M2 评审建议⑤:0/上限校验 */
+    }
 
     pthread_mutex_lock(&g_sqcq_lock);
     vd_sq_t *sq = GetSqLocked(info->sqId, (uint32_t)info->type, info->tsId);
@@ -205,14 +243,45 @@ DLLEXPORT drvError_t halSqTaskSend(uint32_t devId, struct halTaskSendInfo *info)
                           info->sqId, (int)info->type, info->tsId);
         return DRV_ERROR_INVALID_VALUE;
     }
+    if (sq->tail + info->sqe_num - sq->head > sq->sqe_depth) {
+        pthread_mutex_unlock(&g_sqcq_lock);
+        vdriver_debug_log("halSqTaskSend: 超过环深度 pending=%u num=%u depth=%u",
+                          sq->tail - sq->head, info->sqe_num, sq->sqe_depth);
+        return DRV_ERROR_INVALID_VALUE;
+    }
     const uint32_t first_pos = sq->tail % sq->sqe_depth;
+    const uint32_t stride = (sq->sqe_size != 0U) ? sq->sqe_size : 64U; /* M2 评审建议⑤ */
     sq->tail += info->sqe_num;
-    sq->head = sq->tail; /* D6:解释执行瞬时完成 */
     pthread_mutex_unlock(&g_sqcq_lock);
 
-    for (uint32_t i = 0; i < info->sqe_num; i++) {
-        sqe_interp_execute(info->sqe_addr + (size_t)i * 64U);
+    /* M2 评审严重①:先解释执行,再发布 head=tail——异步 waiter 等到效果落地才算完成 */
+    if (vdriver_debug_level() >= 2) {
+        /* 布局取证:hex-dump 真实下发的 SQE(评审严重②的 M3 门禁证据) */
+        for (uint32_t i = 0; i < info->sqe_num && i < 4U; i++) {
+            const uint8_t *s = info->sqe_addr + (size_t)i * stride;
+            fprintf(stderr, "[vdriver][SQE %u/%u] %02x %02x %02x %02x %02x %02x %02x %02x | "
+                    "%02x %02x %02x %02x %02x %02x %02x %02x | %02x %02x %02x %02x %02x %02x %02x %02x | "
+                    "%02x %02x %02x %02x %02x %02x %02x %02x | "
+                    "%02x %02x %02x %02x %02x %02x %02x %02x | %02x %02x %02x %02x %02x %02x %02x %02x | "
+                    "%02x %02x %02x %02x %02x %02x %02x %02x | %02x %02x %02x %02x %02x %02x %02x %02x\n",
+                    i, info->sqe_num, s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7],
+                    s[8], s[9], s[10], s[11], s[12], s[13], s[14], s[15],
+                    s[16], s[17], s[18], s[19], s[20], s[21], s[22], s[23],
+                    s[24], s[25], s[26], s[27], s[28], s[29], s[30], s[31],
+                    s[32], s[33], s[34], s[35], s[36], s[37], s[38], s[39],
+                    s[40], s[41], s[42], s[43], s[44], s[45], s[46], s[47],
+                    s[48], s[49], s[50], s[51], s[52], s[53], s[54], s[55],
+                    s[56], s[57], s[58], s[59], s[60], s[61], s[62], s[63]);
+        }
     }
+    for (uint32_t i = 0; i < info->sqe_num; i++) {
+        sqe_interp_execute(info->sqe_addr + (size_t)i * stride);
+    }
+
+    pthread_mutex_lock(&g_sqcq_lock);
+    sq->head = sq->tail;
+    pthread_mutex_unlock(&g_sqcq_lock);
+
     info->pos = first_pos; /* 出参:首 SQE 位置(trs_pkg.h:153) */
     return DRV_ERROR_NONE;
 }

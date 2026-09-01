@@ -62,12 +62,15 @@ int main()
     CHECK(halSqCqAllocate(0, &in, &out) == DRV_ERROR_NONE && out.sqId < 64U, "halSqCqAllocate");
     const uint32_t sq_id = out.sqId;
 
-    /* ---- 设备内存 ---- */
+    /* ---- 设备内存与注册 host 源(异步 H2D 的 src 必须是注册内存) ---- */
     void *dev_a = nullptr;
     void *dev_b = nullptr;
+    void *host_src = nullptr;
     CHECK(halMemAlloc(&dev_a, 1024, 0) == DRV_ERROR_NONE, "halMemAlloc dev_a");
     CHECK(halMemAlloc(&dev_b, 1024, 0) == DRV_ERROR_NONE, "halMemAlloc dev_b");
+    CHECK(halMemAlloc(&host_src, 256, 0) == DRV_ERROR_NONE, "halMemAlloc host_src");
     const char pattern[64] = "vdriver-sdma-inline-pattern";
+    (void)memcpy(host_src, pattern, sizeof(pattern)); /* host 块可直接写 */
     uint8_t back[64] = {};
 
     /* ---- SQE 组包:5 条 ---- */
@@ -75,7 +78,7 @@ int main()
     (void)memset(sqes, 0, sizeof(sqes));
 
     /* #0 SDMA 内联:H2D(stack→dev_a) */
-    BuildSdmaInline(sqes + 0 * 64, (uint64_t)(uintptr_t)pattern,
+    BuildSdmaInline(sqes + 0 * 64, (uint64_t)(uintptr_t)host_src,
                     (uint64_t)(uintptr_t)dev_a, sizeof(pattern), 1, 100);
     /* #1 SDMA 内联:D2D(dev_a→dev_b) */
     BuildSdmaInline(sqes + 1 * 64, (uint64_t)(uintptr_t)dev_a,

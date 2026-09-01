@@ -2,16 +2,24 @@
  * sqe_interp.cpp —— STARS SQE 解释器(vdriver 的"设备侧执行"替代)
  *
  * 原则(实施方案.md D6/§4.3):
- *  - 所有 SQE 视为"已完成"(head 推进由 sqcq.c 处理);
+ *  - 所有 SQE 视为"已完成"(head 推进由 sqcq.c 在解释执行后发布);
  *  - 只有内存效果类 SQE 需要真执行:SDMA 拷贝(内联/间接)、
  *    PLACE_HOLDER 承载的异步拷贝(task_type=90)、WRITE_VALUE 小块写;
  *  - kernel/AICPU/事件类忽略(runtime 侧 D7 已让 AICPU fail-fast);
  *  - 9.1.0 的大块 memset 在 runtime 侧已分解为 host memset + memcpy SQE
  *    (memcpy_starsv2.cc:246 DevMemSetAsync),无需 memset 解释。
+ *  - M2 评审严重③:所有待写地址必须落在注册表已分配块内,否则丢弃并计数
+ *    (防御畸形/布局不符的 SQE 造成野指针写)。
+ *
+ * ⚠️ 布局警告(M2 评审严重②,M3 门禁):当前按 Stars v100 布局解析
+ * (stars_dma.hpp:125/172);910B1 若走 David 路径(task_david.cc ToConstructDavidSqe)
+ * 则布局不同——已通过 halSqTaskSend 的 hex-dump(VDRIVER_LOG=2)取证,
+ * 真实流量对照结果记录于 进展.md M3 节。
  */
 #include "sqe_layout.hpp"
 #include "vdriver_internal.h"
 
+#include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -20,27 +28,50 @@ using namespace vdriver::sqe;
 
 extern "C" {
 
-/* 统计计数(测试与诊断用) */
-static uint64_t g_interp_kernel_cnt = 0;
-static uint64_t g_interp_memcpy_cnt = 0;
-static uint64_t g_interp_ignored_cnt = 0;
+/* 统计计数(M2 评审风格⑩:原子化) */
+static std::atomic<uint64_t> g_interp_kernel_cnt{0};
+static std::atomic<uint64_t> g_interp_memcpy_cnt{0};
+static std::atomic<uint64_t> g_interp_ignored_cnt{0};
+static std::atomic<uint64_t> g_interp_dropped_cnt{0};
 
-uint64_t sqe_interp_stat_kernel(void) { return g_interp_kernel_cnt; }
-uint64_t sqe_interp_stat_memcpy(void) { return g_interp_memcpy_cnt; }
-uint64_t sqe_interp_stat_ignored(void) { return g_interp_ignored_cnt; }
+uint64_t sqe_interp_stat_kernel(void) { return g_interp_kernel_cnt.load(); }
+uint64_t sqe_interp_stat_memcpy(void) { return g_interp_memcpy_cnt.load(); }
+uint64_t sqe_interp_stat_ignored(void) { return g_interp_ignored_cnt.load(); }
+uint64_t sqe_interp_stat_dropped(void) { return g_interp_dropped_cnt.load(); }
 void sqe_interp_stat_reset(void)
 {
-    g_interp_kernel_cnt = 0;
-    g_interp_memcpy_cnt = 0;
-    g_interp_ignored_cnt = 0;
+    g_interp_kernel_cnt.store(0);
+    g_interp_memcpy_cnt.store(0);
+    g_interp_ignored_cnt.store(0);
+    g_interp_dropped_cnt.store(0);
 }
 
-static void DoMemcpy(void *dst, const void *src, uint32_t len)
+/* 地址防护(M2 评审严重③):[addr, addr+len) 必须整体落于一个已注册块内;
+ * 已注册块涵盖设备内存与 aclrtMallocHost 的 host 内存(均经 halMemAlloc) */
+static bool MemRangeValid(uint64_t addr, uint32_t len)
 {
-    if (len == 0U || dst == nullptr || src == nullptr) {
+    if (addr == 0ULL) {
+        return false;
+    }
+    uint64_t size = 0U;
+    if (vdriver_mem_query(reinterpret_cast<const void *>(addr), &size) != 0) {
+        return false;
+    }
+    return (len <= size);
+}
+
+static void DoMemcpy(uint64_t dst, uint64_t src, uint32_t len)
+{
+    if (len == 0U) {
         return;
     }
-    (void)memmove(dst, src, len);
+    if (!MemRangeValid(src, len) || !MemRangeValid(dst, len)) {
+        vdriver_debug_log("DoMemcpy 丢弃: 地址越界或未注册 src=%#llx dst=%#llx len=%u",
+                          (unsigned long long)src, (unsigned long long)dst, len);
+        g_interp_dropped_cnt++;
+        return;
+    }
+    (void)memmove(reinterpret_cast<void *>(dst), reinterpret_cast<const void *>(src), len);
     g_interp_memcpy_cnt++;
 }
 
@@ -48,10 +79,9 @@ static void DoMemcpy(void *dst, const void *src, uint32_t len)
 static void HandleSdma(const uint8_t *sqe)
 {
     /* ptrMode 位在字节 15 的 bit0(header 8 + res3 4 + res4 2 + kernel_credit 1) */
-    const uint8_t byte13 = sqe[15]; /* ptrMode 在字节15(已修正) | ptrMode:1(bit0) */
-    const uint8_t ptr_mode = byte13 & 0x1U;
+    const uint8_t ptr_mode_byte = sqe[15];
+    const uint8_t ptr_mode = ptr_mode_byte & 0x1U;
 
-    vdriver_debug_log("HandleSdma: ptr_mode=%u", ptr_mode);
     if (ptr_mode != 0U) {
         /* 间接:base_low@16、base_high:17@20 → rtDavidMemcpyAddrInfo(host 内存) */
         const uint64_t base =
@@ -59,18 +89,19 @@ static void HandleSdma(const uint8_t *sqe)
             (((uint64_t)(ReadU32LE(sqe + PTR_SQE_OFF_BITS) & PTR_SQE_ADDR_HIGH_MASK))
              << PTR_SQE_ADDR_HIGH_SHIFT);
         if (base == 0ULL) {
+            g_interp_ignored_cnt++;
             return;
         }
         const uint64_t src = ReadU64LE(reinterpret_cast<const uint8_t *>(base) + DAVID_INFO_OFF_SRC);
         const uint64_t dst = ReadU64LE(reinterpret_cast<const uint8_t *>(base) + DAVID_INFO_OFF_DST);
         const uint32_t len = ReadU32LE(reinterpret_cast<const uint8_t *>(base) + DAVID_INFO_OFF_LEN);
-        DoMemcpy(reinterpret_cast<void *>(dst), reinterpret_cast<const void *>(src), len);
+        DoMemcpy(dst, src, len);
     } else {
         /* 内联:length@28, src@32, dst@40 */
         const uint32_t len = ReadU32LE(sqe + 28);
         const uint64_t src = ReadU64LE(sqe + 32);
         const uint64_t dst = ReadU64LE(sqe + 40);
-        DoMemcpy(reinterpret_cast<void *>(dst), reinterpret_cast<const void *>(src), len);
+        DoMemcpy(dst, src, len);
     }
 }
 
@@ -78,13 +109,12 @@ static void HandleSdma(const uint8_t *sqe)
 static void HandlePlaceHolder(const uint8_t *sqe)
 {
     const uint16_t task_type = ReadU16LE(sqe + 2);
-    vdriver_debug_log("HandlePH: task_type=%u", task_type);
     if (task_type == PH_TASK_TYPE_MEMCPY_ASYNC_WITHOUT_SDMA) {
         /* RtMemCpyAsyncWithoutSdma:src@16, dest@24, size@32 */
         const uint64_t src = ReadU64LE(sqe + 16);
-        const uint64_t dest = ReadU64LE(sqe + 24);
-        const uint32_t size = ReadU32LE(sqe + 32);
-        DoMemcpy(reinterpret_cast<void *>(dest), reinterpret_cast<const void *>(src), size);
+        const uint64_t dst = ReadU64LE(sqe + 24);
+        const uint32_t len = ReadU32LE(sqe + 32);
+        DoMemcpy(dst, src, len);
     } else {
         g_interp_ignored_cnt++;
     }
@@ -97,19 +127,19 @@ static void HandleWriteValue(const uint8_t *sqe)
     const uint32_t addr_bits = ReadU32LE(sqe + 20);
     const uint64_t addr = addr_low |
         (((uint64_t)(addr_bits & WRITE_VALUE_ADDR_HIGH_MASK)) << WRITE_VALUE_ADDR_HIGH_SHIFT);
-    if (addr == 0ULL) {
+    const uint32_t awsize = (addr_bits >> WRITE_VALUE_AWSIZE_SHIFT) & WRITE_VALUE_AWSIZE_MASK;
+    const uint32_t len = (awsize >= 3U) ? 8U : 4U;
+    if (!MemRangeValid(addr, len)) {
+        vdriver_debug_log("HandleWriteValue 丢弃: 地址越界或未注册 %#llx", (unsigned long long)addr);
+        g_interp_dropped_cnt++;
         return;
     }
-    const uint32_t awsize = (addr_bits >> WRITE_VALUE_AWSIZE_SHIFT) & WRITE_VALUE_AWSIZE_MASK;
-    const uint32_t value = ReadU32LE(sqe + 32);
     if (awsize >= 3U) {
-        /* ≥8 字节:写 8 字节(值低位 part0,高位 part1) */
-        const uint32_t value_hi = ReadU32LE(sqe + 36);
-        uint64_t v64 = value | ((uint64_t)value_hi << 32U);
+        const uint64_t v64 = (uint64_t)ReadU32LE(sqe + 32) |
+                             ((uint64_t)ReadU32LE(sqe + 36) << 32U);
         (void)memcpy(reinterpret_cast<void *>(addr), &v64, sizeof(v64));
     } else {
-        /* 1/2/4 字节:写 4 字节(设备寄存器类语义,mock 下按 4B 落地) */
-        uint32_t v32 = value;
+        const uint32_t v32 = ReadU32LE(sqe + 32);
         (void)memcpy(reinterpret_cast<void *>(addr), &v32, sizeof(v32));
     }
     g_interp_memcpy_cnt++;

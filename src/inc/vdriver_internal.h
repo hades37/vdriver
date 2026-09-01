@@ -24,14 +24,20 @@
 /* 最多模拟设备数(与 cmodel_driver 的 MAX_DEV_NUM=1 同口径) */
 #define VDRIVER_MAX_DEV_NUM 1U
 
-/* 设备默认参数(VDRIVER_SOC 环境变量可覆盖,首读缓存;变更 SoC 需重启进程) */
-#define VDRIVER_DEF_SOC_NAME    "Ascend910B1" /* data/platform_config/Ascend910B1.ini 已确认存在 */
-#define VDRIVER_DEF_AICORE_NUM  20            /* Ascend910B1 平台规格 */
+/* 设备默认参数(VDRIVER_SOC 环境变量可覆盖,首读缓存;变更 SoC 需重启进程)
+ * 核数以安装包 data/platform_config/Ascend910B1.ini 为准:
+ *   ai_core_cnt=24, cube_core_cnt=24(runtime 将 CUBE_NUM 重映射到 AICORE/CORE_NUM,
+ *   api_impl.cc:3621), vector_core_cnt=48 */
+#define VDRIVER_DEF_SOC_NAME        "Ascend910B1"
+#define VDRIVER_DEF_AICORE_NUM      24U
+#define VDRIVER_DEF_VECTOR_CORE_NUM 48U
+#define VDRIVER_DEF_TS_NUMBER       2U /* SYSTEM/CORE_NUM=tsNumber,合法 [1,2](runtime.cc:774-784) */
 
 /* RT_RUN_MODE(runtime/pkg_inc/runtime/runtime/dev.h):ONLINE=真实在线运行时 */
 #define VDRIVER_RUN_MODE_ONLINE 1U
 
 VDRIVER_API void vdriver_debug_log(const char *fmt, ...);
+VDRIVER_API int vdriver_debug_level(void); /* 0=静默 1=关键日志 2=含 SQE hex-dump */
 
 /* 设备模块(device.c):设备打开状态;sqcq.c 在 Allocate/TaskSend 时校验 */
 VDRIVER_API int vdriver_device_is_open(uint32_t dev_id);

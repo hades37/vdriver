@@ -49,6 +49,8 @@ set(VDRIVER_STRONG_SYMBOLS
     halCqReportIrqWait
     halCqReportGet
     halReportRelease
+    halResourceIdAlloc
+    halResourceIdFree
 )
 
 # ---------- h2c 桩基座:OBJECT 库,强语义符号经编译期宏重命名去重 ----------
@@ -70,7 +72,8 @@ add_library(vdriver SHARED
     src/device.c
     src/memory.c
     src/sqcq.c
-    src/sqe_interp.cpp)
+    src/sqe_interp.cpp
+    src/res.c)
 
 target_include_directories(vdriver PRIVATE
     ${RUNTIME_INC}
@@ -86,6 +89,15 @@ target_link_options(vdriver PRIVATE
 # 关键:无 VERSION 属性 → CMake 自动 SONAME=libascend_hal.so,DT_NEEDED 按名命中(D2)
 set_target_properties(vdriver PROPERTIES
     OUTPUT_NAME "ascend_hal"
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+
+# 哑 libtsdclient:runtime TsdClientInit 的 dlsym(TsdOpen/TsdOpenEx) 缺符号 →
+# tsdOpen_=NULL → "no TsdOpen"(runtime.cc:1851)整体跳过 TSD 路径,SetDevice 不再
+# 因 hdc 会话失败而报错(M3 L1 实测抓到)。与 D7/D8(无设备守护进程)一致。
+add_library(tsdclient_dummy SHARED src/dummy/tsdclient_dummy.c)
+set_target_properties(tsdclient_dummy PROPERTIES
+    OUTPUT_NAME "tsdclient"
+    SUFFIX ".so"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 # ---------- 测试 ----------

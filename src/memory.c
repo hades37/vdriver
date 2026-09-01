@@ -78,14 +78,28 @@ int vdriver_mem_query(const void *user_ptr, uint64_t *size)
     if (user_ptr == NULL || size == NULL) {
         return -1;
     }
+    const uint64_t addr = (uint64_t)(uintptr_t)user_ptr;
     pthread_mutex_lock(&g_mem_lock);
-    const mem_entry_t *e = MemTableFindLocked(user_ptr);
-    const int found = (e != NULL);
-    if (found) {
-        *size = e->size;
+    mem_entry_t *e = MemTableFindLocked(user_ptr);
+    if (e != NULL) {
+        *size = e->size; /* 块首精确命中:返回块大小 */
+    } else {
+        /* 块内地址:返回剩余可写字节数(SQE 引用块中段场景) */
+        for (uint32_t i = 0; i < MEM_TABLE_SIZE; i++) {
+            const mem_entry_t *it = &g_mem_table[i];
+            if (!it->used) {
+                continue;
+            }
+            const uint64_t base = (uint64_t)(uintptr_t)it->user;
+            if (addr > base && (addr - base) < it->size) {
+                *size = it->size - (addr - base);
+                pthread_mutex_unlock(&g_mem_lock);
+                return 0;
+            }
+        }
     }
     pthread_mutex_unlock(&g_mem_lock);
-    return found ? 0 : -1;
+    return (e != NULL) ? 0 : -1;
 }
 
 DLLEXPORT drvError_t halMemAlloc(void **pp, unsigned long long size, unsigned long long flag)
