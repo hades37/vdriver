@@ -16,7 +16,7 @@ mkdir -p "$CA_LIB"
 ln -sf "${SIM}/lib/libruntime_cmodel.so"   "$CA_LIB/libruntime.so"      # PV runtime 顶替
 ln -sf "${SIM}/lib/libnpu_drv_pvmodel.so"  "$CA_LIB/libascend_hal.so"   # PV 驱动满足 hal DT_NEEDED
 ln -sf "${SIM}/lib/"*.so "$CA_LIB/" 2>/dev/null
-BIN="${BIN:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/tests/l1/hello_cann}"
+BIN="${BIN:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/tests/l1/hello_cann}"
 cd "${SIM}"   # 仿真模型从 cwd 读 config*.json
 exec env LD_LIBRARY_PATH="${CA_LIB}:${TK}/lib64:${SIM}/lib:${TK}/../lib64" \
     CAMODEL_LOG_PATH=/tmp/camlog \
