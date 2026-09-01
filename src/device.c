@@ -1,7 +1,7 @@
 /**
  * device.c —— vdriver 设备/能力/SoC 信息(强语义,覆盖桩)
  *
- * 决策(实施方案.md):D4 VIRTUAL+UNIFIED;D5 Ascend910B1;D7 AICPU 核数 0。
+ * 决策(实施方案.md):D4 VIRTUAL+UNIFIED;D5 Ascend910B1;D7 AICPU 任务忽略(M4 修正:核数对齐 ini=6)。
  * 回答口径依据 runtime 消费点:
  *  - halGetDeviceInfo:runtime.cc:655-731(SoC 推导)、npu_driver.cc:60-90/488(枚举与模式)、
  *    runtime.cc:978/1043(drvGetPlatformInfo → runMode)
@@ -131,8 +131,11 @@ DLLEXPORT drvError_t halGetDeviceInfo(uint32_t devId, int32_t moduleType,
             }
             break;
         case MODULE_TYPE_AICPU:
-            /* D7: 核数 0 → AiCpuTaskSupportCheck 报 FEATURE_NOT_SUPPORT,fail-fast 不崩 */
-            *value = 0;
+            /* 原 D7 fail-fast(核数 0)在 M4 修正:torch RNG 系算子(normal_/uniform_
+             * 的 Inplace 变体)是 AICPU 内核,核数为 0 会在参数校验前被拒(107000)。
+             * 对齐 ini 真值 ai_cpu_cnt=6;AICPU 任务 SQE 由解释器防御性忽略
+             * (内核不模拟执行),流语义保持。 */
+            *value = 6;
             break;
         default:
             break;

@@ -65,8 +65,13 @@ static void DoMemcpy(uint64_t dst, uint64_t src, uint32_t len)
     if (len == 0U) {
         return;
     }
-    if (!MemRangeValid(src, len) || !MemRangeValid(dst, len)) {
-        vdriver_debug_log("DoMemcpy 丢弃: 地址越界或未注册 src=%#llx dst=%#llx len=%u",
+    /* 方向感知(M4 真流量修正):设备侧必须在注册表内,对端允许任意 host VA
+     * (torch pinned/staging 内存不经 halHostRegister,真实流量大量存在)。
+     * dst 在注册表 → H2D;src 在注册表 → D2H;两侧都不在 → 丢弃。 */
+    const bool dst_reg = MemRangeValid(dst, len);
+    const bool src_reg = MemRangeValid(src, len);
+    if (!dst_reg && !src_reg) {
+        vdriver_debug_log("DoMemcpy 丢弃: 无设备侧地址 src=%#llx dst=%#llx len=%u",
                           (unsigned long long)src, (unsigned long long)dst, len);
         g_interp_dropped_cnt++;
         return;
@@ -97,11 +102,19 @@ static void HandleSdma(const uint8_t *sqe)
         const uint32_t len = ReadU32LE(reinterpret_cast<const uint8_t *>(base) + DAVID_INFO_OFF_LEN);
         DoMemcpy(dst, src, len);
     } else {
-        /* 内联:length@28, src@32, dst@40 */
-        const uint32_t len = ReadU32LE(sqe + 28);
+        /* 内联布局(M4 真流量实证:src@32, dst@40, len@48;@16-31 保留段。
+         * M2 研究的 len@28 有误——当时单测自产 SQE 验证自产布局属循环论证,
+         * 且 len@28=0 导致 DoMemcpy 静默返回、拷贝从未发生) */
         const uint64_t src = ReadU64LE(sqe + 32);
         const uint64_t dst = ReadU64LE(sqe + 40);
-        DoMemcpy(dst, src, len);
+        const uint64_t len64 = ReadU64LE(sqe + 48);
+        if (dst == 0ULL || src == 0ULL) {
+            vdriver_debug_log("HandleSdma 丢弃: 内联空地址 dst=%#llx src=%#llx",
+                              (unsigned long long)dst, (unsigned long long)src);
+            g_interp_dropped_cnt++;
+            return;
+        }
+        DoMemcpy(dst, src, (uint32_t)len64);
     }
 }
 

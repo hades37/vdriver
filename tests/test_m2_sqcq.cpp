@@ -36,11 +36,9 @@ static void BuildSdmaInline(uint8_t *sqe, uint64_t src, uint64_t dst, uint32_t l
     s->header.wr_cqe = 1U;
     s->header.rt_stream_id = stream_id;
     s->header.task_id = task_id;
-    s->length = len;
-    s->src_addr_low = (uint32_t)(src & 0xFFFFFFFFULL);
-    s->src_addr_high = (uint32_t)(src >> 32U);
-    s->dst_addr_low = (uint32_t)(dst & 0xFFFFFFFFULL);
-    s->dst_addr_high = (uint32_t)(dst >> 32U);
+    s->src_addr = src;   /* M4 真布局:src@16 */
+    s->dst_addr = dst;   /* dst@24 */
+    s->length = len;     /* len@32 */
 }
 
 int main()

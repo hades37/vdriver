@@ -1,0 +1,128 @@
+# vdriver 单卡用例:Kimi-K3 减层减专家 + eager 算子(基于 examples/kimi_k3/kimik3_config.yaml 裁剪)
+# 运行方式见 tests/mm_kimi/run_1p.sh(LD_LIBRARY_PATH 前置 vdriver,PYTHONPATH 前置标准 triton)
+
+# 并行策略
+parallel:
+  fully_shard_parallel_size: auto
+  fsdp_plan:
+    apply_modules:
+      - language_model.model
+      - language_model.model.embed_tokens
+      - language_model.model.layers.{*}
+      - language_model.model.layers.{*}.block_sparse_moe.experts
+      - language_model.lm_head
+    hook_modules:
+      - language_model.model.layers.{*}
+    num_to_forward_prefetch: 0
+    num_to_backward_prefetch: 0
+    param_dtype: bf16
+    reduce_dtype: fp32
+  ulysses_parallel_size: 1
+  expert_parallel_size: 1   # 单卡关闭 EP
+  ep_plan:
+    apply_modules:
+      - language_model.model.layers.{*}.block_sparse_moe.experts
+    dispatcher: alltoall
+    use_npu_fused_ops: true
+
+# 数据相关配置(虚构数据:tests 生成于 /tmp/mock_kimi)
+data:
+  dataset_param:
+    dataset_type: huggingface
+    attr:
+      images: images
+      messages: messages
+      role_tag: role
+      content_tag: content
+      user_tag: user
+      assistant_tag: assistant
+    preprocess_parameters:
+      model_name_or_path: &HF_MODEL_LOAD_PATH mindspeed_mm/fsdp/models/kimi_k3
+      trust_remote_code: true
+      use_fast_tokenizer: false
+      split_special_tokens: false
+      image_max_pixels: 12544    # 112*112
+      image_min_pixels: 1024
+      video_max_pixels: 16384
+      video_min_pixels: 0
+      video_fps: 2.0
+      video_maxlen: 64
+    basic_parameters:
+      cutoff_len: 512
+      template: kimi_k3
+      enable_thinking: false
+      train_on_prompt: false
+      mask_history: false
+      dataset_dir: /tmp/mock_kimi
+      dataset: &DATASET_PATH /tmp/mock_kimi/mock_data_pic_num_1_textlen_128.json
+      cache_dir: ./cache_dir_kimi_vdriver/
+      overwrite_cache: true
+      preprocess_on_fly: true
+      preprocessing_batch_size: 1000
+      preprocessing_num_workers: 1
+      max_samples: 2
+
+  dataloader_param:
+    pin_memory: true
+    shuffle: true
+    dataloader_mode: sampler
+    drop_last: true
+    sampler_type: BaseRandomBatchSampler
+    num_workers: 0
+    collate_param:
+      collator_id: qwen3vl
+      ignore_pad_token_for_loss: true
+    enable_preload: false
+
+# 模型配置
+model:
+  model_id: kimi_k3
+  model_name_or_path: *HF_MODEL_LOAD_PATH
+  trust_remote_code: true
+  attn_implementation: eager   # vdriver:FA 融合算子(161001)不可用,eager 走基础算子
+  use_grouped_expert_matmul: true
+  # 全部走 eager(torch 小算子 → torch_npu → aclnn → vdriver),避开 triton-ascend/AscendC 融合算子
+  kda_implementation: eager
+  causal_conv1d_implementation: triton
+  situ_glu_implementation: eager
+  attn_res_implementation: eager
+  skip_flash_attn_recompute: false
+  skip_kda_recompute: false
+
+# 优化特性配置(单卡流程验证:全部关闭,减少耦合)
+features:
+  loss_cfg:
+    loss_type: default
+  enable_chunk_loss: false
+  recompute: false
+  enable_activation_offload: false
+  enable_chunk_mbs: false
+  enable_ep_balance: false
+
+# 训练配置
+training:
+  micro_batch_size: 1
+  gradient_accumulation_steps: 1
+  seed: 42
+  lr: 1.0e-5
+  lr_decay_style: cosine
+  lr_warmup_ratio: 0.1
+  weight_decay: 0
+  train_iters: 2
+  clip_grad: 0.0
+  init_model_with_meta_device: true
+  optimizer: adamw
+  adam_fused: true
+  save_interval: 10000
+  use_deter_comp: false
+  load_rank0_and_broadcast: false
+  plugin:
+    - mindspeed_mm/fsdp/models/kimi_k3
+    - mindspeed_mm/fsdp/data/datasets/huggingface
+
+# 工具配置
+tools:
+  profile:
+    enable: false
+  memory_profile:
+    enable: false

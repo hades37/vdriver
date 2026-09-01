@@ -173,6 +173,10 @@ DLLEXPORT drvError_t halMemcpy(void *dst, size_t dst_size, void *src, size_t cou
         return DRV_ERROR_INVALID_VALUE;
     }
     (void)memmove(dst, src, count); /* host 后备模型下四向统一 memmove */
+    vdriver_debug_log("halMemcpy: dst=%p src=%p count=%zu head=%02x %02x %02x %02x",
+                      dst, src, count,
+                      count > 0 ? ((uint8_t *)src)[0] : 0, count > 1 ? ((uint8_t *)src)[1] : 0,
+                      count > 2 ? ((uint8_t *)src)[2] : 0, count > 3 ? ((uint8_t *)src)[3] : 0);
     return DRV_ERROR_NONE;
 }
 
@@ -186,5 +190,96 @@ DLLEXPORT drvError_t halHostRegister(void *src_ptr, UINT64 size, UINT32 flag, UI
         return DRV_ERROR_INVALID_VALUE;
     }
     *dst_ptr = src_ptr; /* D4(VIRTUAL+UNIFIED)下基本不触达;身份映射保证语义自洽 */
+    return DRV_ERROR_NONE;
+}
+
+/* ---------------------------------------------------------------------------
+ * drvMemGetAttribute(M4 联调补强):runtime 的 PtrGetRealLocation 依赖本接口
+ * 判定指针位置(未填 memType 会落到"未知类型"分支并拒绝 H2D_EX 拷贝,
+ * DSARandomNormal 等算子的 param 分发即在此失败)。
+ * vdriver 语义:注册表内=锁定设备内存;其余任意 host VA=锁定 host 内存
+ * (flat 地址模型下所有 host 内存可被设备访问)。
+ */
+drvError_t drvMemGetAttribute(DVdeviceptr vptr, struct DVattribute *attr)
+{
+    if (attr == NULL) {
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    (void)memset(attr, 0, sizeof(*attr));
+    attr->memType = DV_MEM_LOCK_HOST;
+    attr->pageSize = 4096U;
+    void *user_ptr = (void *)(uintptr_t)vptr;
+    uint64_t size = 0;
+    if (vdriver_mem_query(user_ptr, &size) == 0) {
+        attr->memType = DV_MEM_LOCK_DEV; /* 注册表命中:设备分配 */
+    }
+    return DRV_ERROR_NONE;
+}
+/* ---------------------------------------------------------------------------
+ * halMemCpyAsync / halMemCpyAsyncWaitFinish(M4 联调补强):
+ * runtime 按弱符号存在性选择拷贝路径——桩原样"定义"了本符号导致 runtime
+ * 走异步分支而桩不搬数据,H2D/D2H 内容为垃圾(hello_cann 用同步 aclrtMemcpy
+ * 才幸免)。这里实现真语义:host 后备模型下立即 memmove,完成态置
+ * ASYNC_COPY_STATU_SUCC(=1,runtime pool.hpp:44)。
+ */
+drvError_t halMemCpyAsync(DVdeviceptr dst, size_t dest_max, DVdeviceptr src,
+                          size_t byte_count, uint64_t *copy_fd)
+{
+    if (dst == 0ULL || src == 0ULL) {
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    if (byte_count > dest_max) {
+        vdriver_debug_log("halMemCpyAsync: count(%zu) > dest_max(%zu)", byte_count, dest_max);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    (void)memmove((void *)(uintptr_t)dst, (const void *)(uintptr_t)src, byte_count);
+    vdriver_debug_log("halMemCpyAsync: dst=%p src=%p count=%zu head=%02x %02x %02x %02x",
+                      (void *)(uintptr_t)dst, (void *)(uintptr_t)src, byte_count,
+                      byte_count > 0 ? ((uint8_t *)(uintptr_t)src)[0] : 0,
+                      byte_count > 1 ? ((uint8_t *)(uintptr_t)src)[1] : 0,
+                      byte_count > 2 ? ((uint8_t *)(uintptr_t)src)[2] : 0,
+                      byte_count > 3 ? ((uint8_t *)(uintptr_t)src)[3] : 0);
+    if (copy_fd != NULL) {
+        *copy_fd = 1ULL; /* ASYNC_COPY_STATU_SUCC:立即完成 */
+    }
+    return DRV_ERROR_NONE;
+}
+
+drvError_t halMemCpyAsyncWaitFinish(uint64_t copy_fd)
+{
+    (void)copy_fd; /* 拷贝同步完成,无需等待 */
+    return DRV_ERROR_NONE;
+}
+/* ---------------------------------------------------------------------------
+ * halSdmaCopy(M4 联调补强):ini 配 SDMA_COPY_BY_HAL 时 runtime 的同步拷贝
+ * 走本接口(桩原样返回 0 但不搬数据 → torch H2D/D2H 内容为垃圾)。
+ * host 后备模型下等价于一次 memmove;失败按契约回退 memcpy_s 语义。
+ */
+drvError_t halSdmaCopy(DVdeviceptr dst, size_t dst_size, DVdeviceptr src, size_t len)
+{
+    if (dst == 0ULL || src == 0ULL) {
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    if (len > dst_size) {
+        vdriver_debug_log("halSdmaCopy: len(%zu) > dst_size(%zu)", len, dst_size);
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    (void)memmove((void *)(uintptr_t)dst, (const void *)(uintptr_t)src, len);
+    return DRV_ERROR_NONE;
+}
+
+/* ---------------------------------------------------------------------------
+ * drvMemcpy(M4 联调补强):runtime MemCopySyncAdapter 走 drvMemcpy;
+ * 桩原样返回 0 不搬数据。host 后备模型下直接 memmove。
+ */
+drvError_t drvMemcpy(DVdeviceptr dst, size_t dest_max, DVdeviceptr src, size_t byte_count)
+{
+    if (dst == 0ULL || src == 0ULL) {
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    if (byte_count > dest_max) {
+        return DRV_ERROR_INVALID_VALUE;
+    }
+    (void)memmove((void *)(uintptr_t)dst, (const void *)(uintptr_t)src, byte_count);
     return DRV_ERROR_NONE;
 }

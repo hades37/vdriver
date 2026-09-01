@@ -37,6 +37,11 @@ set(VDRIVER_STRONG_SYMBOLS
     drvGetDevIDs
     drvGetPlatformInfo
     drvMemSmmuQuery
+    drvMemGetAttribute
+    drvMemcpy
+    halMemCpyAsync
+    halSdmaCopy
+    halMemCpyAsyncWaitFinish
     halMemAlloc
     halMemFree
     halMemcpy

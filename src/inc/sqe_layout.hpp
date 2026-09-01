@@ -31,7 +31,8 @@ enum SqeType : uint8_t {
     SQE_TYPE_EVENT_RECORD = 4,
     SQE_TYPE_EVENT_WAIT   = 5,
     SQE_TYPE_WRITE_VALUE  = 8,
-    SQE_TYPE_SDMA         = 11,
+    SQE_TYPE_SDMA         = 0x11, /* M4 真流量修正:byte0=0x11(M2 研究的 11 是
+                                   * 循环论证产物;真 SQE hex-dump 为准) */
     SQE_TYPE_INVALID      = 63,
 };
 
@@ -75,28 +76,19 @@ static_assert(sizeof(PhSqe) == 64U, "ph sqe must be 64 bytes");
 constexpr uint16_t PH_TASK_TYPE_MEMCPY_ASYNC_WITHOUT_SDMA = 90U;
 
 /* SDMA 内联 SQE(stars_dma.hpp:125):len@28, src@32, dst@40 */
+/* M4 真流量修正:SDMA 内联布局为 src@32、dst@40、len@48(M2 研究的
+ * len@28 有误:真 SQE hex-dump + data_ptr 对照,byte0=0x11、byte1=0x40、
+ * @16-31 为保留段)。此前单测以自产 SQE 验证自产布局属循环论证。 */
 struct MemcpyAsyncSqe {
     SqeHeader header;
-    uint32_t res3;
-    uint16_t res4;
-    uint8_t kernel_credit;
-    uint8_t ptrMode : 1;
-    uint8_t res5 : 7;
-    uint32_t opcode_bits;
-    uint16_t src_streamid;
-    uint16_t src_sub_streamid;
-    uint16_t dst_streamid;
-    uint16_t dst_sub_streamid;
-    uint32_t length;
-    uint32_t src_addr_low;
-    uint32_t src_addr_high;
-    uint32_t dst_addr_low;
-    uint32_t dst_addr_high;
-    uint32_t src_offset_low;
-    uint32_t dst_offset_low;
-    uint16_t src_offset_high;
-    uint16_t dst_offset_high;
-    uint32_t res_last;
+    uint64_t res_prefix;    /* @8 头部扩展 */
+    uint64_t res_mid0;      /* @16 保留段(真流量为 0) */
+    uint64_t res_mid1;      /* @24 保留段(真流量为 0) */
+    uint64_t src_addr;      /* @32 源地址(host VA / 设备地址均可) */
+    uint64_t dst_addr;      /* @40 目的地址 */
+    uint64_t length;        /* @48 拷贝长度 */
+    uint32_t res6;
+    uint32_t res7;
 };
 static_assert(sizeof(MemcpyAsyncSqe) == 64U, "memcpy sqe must be 64 bytes");
 

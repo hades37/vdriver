@@ -4,7 +4,8 @@
  * 直接链接 libascend_hal.so(vdriver),按调研报告1 详单逐项断言:
  *  - 决策 D4: SYSTEM/INFO_TYPE_ADDR_MODE=UNIFIED、INFO_TYPE_RUN_MACH=VIRTUAL
  *  - 决策 D5: halGetSocVersion → Ascend910B1(存在对应 ini)
- *  - 决策 D7: MODULE_TYPE_AICPU/INFO_TYPE_CORE_NUM = 0(fail-fast)
+ *  - 决策 D7(M4 修正): MODULE_TYPE_AICPU/INFO_TYPE_CORE_NUM = 6(对齐 ini,
+ *    torch RNG 系 AICPU 算子依赖;任务由解释器忽略)
  *  - 内存:512B 对齐、真拷贝(memmove)、头部记账、坏指针拒绝
  */
 #include "ascend_hal.h"
@@ -55,7 +56,7 @@ int main()
           v == VDRIVER_DEF_AICORE_NUM, "AICORE 核数=平台规格");
     v = 99;
     CHECK(halGetDeviceInfo(0, MODULE_TYPE_AICPU, INFO_TYPE_CORE_NUM, &v) == DRV_ERROR_NONE &&
-          v == 0, "AICPU 核数=0(D7 fail-fast)");
+          v == 6, "AICPU 核数=6(对齐 ini,M4 修正)");
     v = -1;
     CHECK(halGetDeviceInfo(0, MODULE_TYPE_SYSTEM, INFO_TYPE_VERSION, &v) == DRV_ERROR_NONE &&
           v == 0, "VERSION=0(SoC 名走 halGetSocVersion)");
