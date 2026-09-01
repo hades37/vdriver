@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define VD_MAX_SQCQ 64U /* 同时存在的 SQ/CQ 数上限 */
+#define VD_MAX_SQCQ 1024U /* 同时存在的 SQ/CQ 数上限(torch_npu 初始化会建大量内部流,M3 L4 实测)*/
 
 typedef struct {
     int in_use;
@@ -79,10 +79,12 @@ DLLEXPORT drvError_t halSqCqAllocate(uint32_t devId, struct halSqCqInputInfo *in
     (void)memset(out, 0, sizeof(*out));
 
     pthread_mutex_lock(&g_sqcq_lock);
-    /* flag bit1=1:runtime 指定 sqId;bit0=1:指定 cqId(trs_pkg.h halSqCqInputInfo 注释);
-       指定 id 时直接占用该槽位,未指定则分配空槽 */
-    uint32_t sq_id = (in->flag & 0x2U) ? in->sqId : AllocSlotLocked(1);
-    uint32_t cq_id = (in->flag & 0x1U) ? in->cqId : AllocSlotLocked(0);
+    /* flag 语义按 ascend_hal_define.h:1128-1136(M3 L4 实测修正:trs_pkg.h 注释
+     * 的 bit0/bit1 指 REUSE_CQ/REUSE_SQ;指定 id 是 SPECIFIED_SQ_ID(bit7)/
+     * SPECIFIED_CQ_ID(bit8))。指定时占用该槽位,否则分配空槽;REUSE 位在
+     * mock 下按普通分配处理(每流独立环,不影响流程)。 */
+    uint32_t sq_id = ((in->flag & TSDRV_FLAG_SPECIFIED_SQ_ID) != 0U) ? in->sqId : AllocSlotLocked(1);
+    uint32_t cq_id = ((in->flag & TSDRV_FLAG_SPECIFIED_CQ_ID) != 0U) ? in->cqId : AllocSlotLocked(0);
     if (sq_id >= VD_MAX_SQCQ || cq_id >= VD_MAX_SQCQ ||
         g_sq_table[sq_id].in_use || g_cq_table[cq_id].in_use) {
         pthread_mutex_unlock(&g_sqcq_lock);
@@ -136,8 +138,8 @@ DLLEXPORT drvError_t halSqCqFree(uint32_t devId, struct halSqCqFreeInfo *info)
         sq->ring = NULL;
         sq->ring_len = 0U;
     }
-    /* flag bit0=0 表示要释放 cq(trs_pkg.h halSqCqFreeInfo 注释) */
-    if ((info->flag & 0x1U) == 0U && info->cqId < VD_MAX_SQCQ) {
+    /* ONLY_SQCQ_ID(ascend_hal_define.h:1132)置位时仅释放 SQ,不级联释放 CQ */
+    if ((info->flag & TSDRV_FLAG_ONLY_SQCQ_ID) == 0U && info->cqId < VD_MAX_SQCQ) {
         g_cq_table[info->cqId].in_use = 0;
     }
     pthread_mutex_unlock(&g_sqcq_lock);

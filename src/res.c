@@ -13,7 +13,7 @@
 #include <pthread.h>
 #include <string.h>
 
-#define VD_ID_PER_TYPE 256U /* 每类型资源 id 上限(流/notify 规模足够) */
+#define VD_ID_PER_TYPE 1024U /* 每类型资源 id 上限 */
 #define VD_ID_TYPE_NUM (uint32_t)DRV_INVALID_ID
 
 static uint8_t g_res_used[VD_ID_TYPE_NUM][VD_ID_PER_TYPE];
