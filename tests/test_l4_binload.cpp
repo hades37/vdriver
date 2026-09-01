@@ -29,10 +29,17 @@ static std::vector<uint8_t> ReadAll(const char *path)
     }
     (void)fseek(fp, 0, SEEK_END);
     const long len = ftell(fp);
+    if (len <= 0) {
+        (void)fclose(fp);
+        return data; /* 终审建议⑦:空/不可读文件返回空 */
+    }
     (void)fseek(fp, 0, SEEK_SET);
     data.resize(static_cast<size_t>(len));
-    (void)fread(data.data(), 1, data.size(), fp);
+    const size_t rd = fread(data.data(), 1, data.size(), fp);
     (void)fclose(fp);
+    if (rd != data.size()) {
+        data.clear(); /* 短读视为无效 */
+    }
     return data;
 }
 

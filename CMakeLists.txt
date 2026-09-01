@@ -80,7 +80,7 @@ target_include_directories(vdriver PRIVATE
     ${RUNTIME_INC}/driver
     src/inc)
 
-target_compile_options(vdriver PRIVATE -fstack-protector-strong)
+target_compile_options(vdriver PRIVATE -fstack-protector-strong -Wall)
 target_link_libraries(vdriver PRIVATE ${CMAKE_DL_LIBS} pthread)
 # 导出白名单:契约符号 hal*/drv* + 内部 vdriver*/sqe_interp*;vdrv_stub_* 收敛 local
 target_link_options(vdriver PRIVATE

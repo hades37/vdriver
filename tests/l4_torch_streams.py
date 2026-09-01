@@ -7,9 +7,10 @@
   - 异步 H2D:pin_memory + non_blocking=True(触发 async 拷贝路径)
   - 结果校验仅记录:内核不模拟执行,数值非目标(见 进展.md 已知行为)
 """
+import os
 import sys
 
-TRITON_STD_DIR = "/tmp/vd_triton_std"
+TRITON_STD_DIR = os.environ.get("VDRIVER_TRITON_STD", "/tmp/vd_triton_std")
 sys.path.insert(0, TRITON_STD_DIR)
 
 import torch  # noqa: E402

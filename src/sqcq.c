@@ -16,12 +16,14 @@
 
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define VD_MAX_SQCQ 1024U /* 同时存在的 SQ/CQ 数上限(torch_npu 初始化会建大量内部流,M3 L4 实测)*/
 
 typedef struct {
     int in_use;
+    uint64_t gen; /* 槽位代数:复用后递增,防止跨释放窗口的过期回写(终审严重①) */
     drvSqCqType_t type;
     uint32_t ts_id;
     uint32_t sqe_size;
@@ -41,6 +43,7 @@ typedef struct {
 static vd_sq_t g_sq_table[VD_MAX_SQCQ];
 static vd_cq_t g_cq_table[VD_MAX_SQCQ];
 static pthread_mutex_t g_sqcq_lock = PTHREAD_MUTEX_INITIALIZER;
+static uint64_t g_sq_gen = 0; /* 槽位代数计数(终审严重①) */
 
 /* 槽位下标即 id(Allocate 回填);按 type/tsId 校验归属,调用方持锁 */
 static vd_sq_t *GetSqLocked(uint32_t sq_id, uint32_t type, uint32_t ts_id)
@@ -95,6 +98,7 @@ DLLEXPORT drvError_t halSqCqAllocate(uint32_t devId, struct halSqCqInputInfo *in
     vd_sq_t *sq = &g_sq_table[sq_id];
     (void)memset(sq, 0, sizeof(*sq));
     sq->in_use = 1;
+    sq->gen = ++g_sq_gen;
     sq->type = in->type;
     sq->ts_id = in->tsId;
     sq->sqe_size = (in->sqeSize != 0U) ? in->sqeSize : 64U; /* normal: 64B(trs_pkg.h) */
@@ -132,12 +136,18 @@ DLLEXPORT drvError_t halSqCqFree(uint32_t devId, struct halSqCqFreeInfo *info)
     }
     pthread_mutex_lock(&g_sqcq_lock);
     vd_sq_t *sq = GetSqLocked(info->sqId, (uint32_t)info->type, info->tsId);
-    if (sq != NULL) {
-        sq->in_use = 0;
-        free(sq->ring); /* 释放 SQ 环 */
-        sq->ring = NULL;
-        sq->ring_len = 0U;
+    if (sq == NULL) {
+        /* 终审严重②:未命中静默成功会让上层误以为已释放,ring/槽位永久泄漏 */
+        pthread_mutex_unlock(&g_sqcq_lock);
+        vdriver_debug_log("halSqCqFree: 未命中 sqId=%u(type=%d tsId=%u)",
+                          info->sqId, (int)info->type, info->tsId);
+        return DRV_ERROR_INVALID_VALUE;
     }
+    sq->in_use = 0;
+    sq->gen++;
+    free(sq->ring); /* 释放 SQ 环 */
+    sq->ring = NULL;
+    sq->ring_len = 0U;
     /* ONLY_SQCQ_ID(ascend_hal_define.h:1132)置位时仅释放 SQ,不级联释放 CQ */
     if ((info->flag & TSDRV_FLAG_ONLY_SQCQ_ID) == 0U && info->cqId < VD_MAX_SQCQ) {
         g_cq_table[info->cqId].in_use = 0;
@@ -253,6 +263,7 @@ DLLEXPORT drvError_t halSqTaskSend(uint32_t devId, struct halTaskSendInfo *info)
     }
     const uint32_t first_pos = sq->tail % sq->sqe_depth;
     const uint32_t stride = (sq->sqe_size != 0U) ? sq->sqe_size : 64U; /* M2 评审建议⑤ */
+    const uint64_t gen = sq->gen; /* 终审严重①:捕获代数 */
     sq->tail += info->sqe_num;
     pthread_mutex_unlock(&g_sqcq_lock);
 
@@ -280,12 +291,30 @@ DLLEXPORT drvError_t halSqTaskSend(uint32_t devId, struct halTaskSendInfo *info)
         sqe_interp_execute(info->sqe_addr + (size_t)i * stride);
     }
 
+    /* 终审严重①:执行窗口内槽位可能被 Free/Allocate 复用,回写前复验代数与归属 */
     pthread_mutex_lock(&g_sqcq_lock);
-    sq->head = sq->tail;
+    vd_sq_t *sq_now = GetSqLocked(info->sqId, (uint32_t)info->type, info->tsId);
+    if (sq_now != NULL && sq_now->gen == gen) {
+        sq_now->head = sq_now->tail;
+    }
     pthread_mutex_unlock(&g_sqcq_lock);
 
     info->pos = first_pos; /* 出参:首 SQE 位置(trs_pkg.h:153) */
     return DRV_ERROR_NONE;
+}
+
+/* 设备关闭时清空全部 SQ/CQ 账目(终审建议④:force reset 绕过 Free 的泄漏防护) */
+void vdriver_sqcq_release_all(void)
+{
+    pthread_mutex_lock(&g_sqcq_lock);
+    for (uint32_t i = 0; i < VD_MAX_SQCQ; i++) {
+        if (g_sq_table[i].in_use) {
+            free(g_sq_table[i].ring);
+        }
+        (void)memset(&g_sq_table[i], 0, sizeof(g_sq_table[i]));
+        (void)memset(&g_cq_table[i], 0, sizeof(g_cq_table[i]));
+    }
+    pthread_mutex_unlock(&g_sqcq_lock);
 }
 
 DLLEXPORT drvError_t halCqReportIrqWait(uint32_t devId, struct halReportInfoInput *in,

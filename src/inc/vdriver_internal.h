@@ -42,6 +42,10 @@ VDRIVER_API int vdriver_debug_level(void); /* 0=静默 1=关键日志 2=含 SQE 
 /* 设备模块(device.c):设备打开状态;sqcq.c 在 Allocate/TaskSend 时校验 */
 VDRIVER_API int vdriver_device_is_open(uint32_t dev_id);
 
+/* sqcq.c/res.c:设备关闭清账(halDeviceClose 调用) */
+VDRIVER_API void vdriver_sqcq_release_all(void);
+VDRIVER_API void vdriver_res_release_all(void);
+
 /* 内存模块(memory.c):按地址反查归属与长度(M2 SQE 代执行/诊断用) */
 VDRIVER_API int vdriver_mem_query(const void *user_ptr, uint64_t *size);
 
@@ -53,6 +57,7 @@ VDRIVER_API void sqe_interp_execute(const uint8_t *sqe);
 VDRIVER_API uint64_t sqe_interp_stat_kernel(void);
 VDRIVER_API uint64_t sqe_interp_stat_memcpy(void);
 VDRIVER_API uint64_t sqe_interp_stat_ignored(void);
+VDRIVER_API uint64_t sqe_interp_stat_dropped(void);
 VDRIVER_API void sqe_interp_stat_reset(void);
 
 #endif /* VDRIVER_INTERNAL_H */

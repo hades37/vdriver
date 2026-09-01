@@ -14,6 +14,7 @@
 #include <string.h>
 
 #define VD_ID_PER_TYPE 1024U /* 每类型资源 id 上限 */
+#define RES_IDX_FLAG   1U    /* in->res 标志槽位(trs_pkg.h:187: 0:pri, 1:flag) */
 #define VD_ID_TYPE_NUM (uint32_t)DRV_INVALID_ID
 
 static uint8_t g_res_used[VD_ID_TYPE_NUM][VD_ID_PER_TYPE];
@@ -36,7 +37,7 @@ DLLEXPORT drvError_t halResourceIdAlloc(uint32_t devId, struct halResourceIdInpu
 
     pthread_mutex_lock(&g_res_lock);
     const uint32_t type = (uint32_t)in->type;
-    const int specified = ((in->res[1U] & TSDRV_RES_SPECIFIED_ID) != 0U);
+    const int specified = ((in->res[RES_IDX_FLAG] & TSDRV_RES_SPECIFIED_ID) != 0U);
 
     uint32_t id = VD_ID_PER_TYPE;
     if (specified) {
@@ -67,6 +68,15 @@ DLLEXPORT drvError_t halResourceIdAlloc(uint32_t devId, struct halResourceIdInpu
     return DRV_ERROR_NONE;
 }
 
+/* 设备关闭时清空全部资源位图(配合 halDeviceClose 清账) */
+void vdriver_res_release_all(void)
+{
+    pthread_mutex_lock(&g_res_lock);
+    (void)memset(g_res_used, 0, sizeof(g_res_used));
+    (void)memset(g_res_hint, 0, sizeof(g_res_hint));
+    pthread_mutex_unlock(&g_res_lock);
+}
+
 DLLEXPORT drvError_t halResourceIdFree(uint32_t devId, struct halResourceIdInputInfo *in)
 {
     (void)devId;
@@ -77,6 +87,12 @@ DLLEXPORT drvError_t halResourceIdFree(uint32_t devId, struct halResourceIdInput
         return DRV_ERROR_INVALID_VALUE;
     }
     pthread_mutex_lock(&g_res_lock);
+    if (g_res_used[(uint32_t)in->type][in->resourceId] == 0U) {
+        pthread_mutex_unlock(&g_res_lock);
+        vdriver_debug_log("halResourceIdFree: double-free type=%u id=%u",
+                          (uint32_t)in->type, in->resourceId);
+        return DRV_ERROR_INVALID_VALUE; /* 终审建议③:double-free 告警 */
+    }
     g_res_used[(uint32_t)in->type][in->resourceId] = 0U;
     pthread_mutex_unlock(&g_res_lock);
     vdriver_debug_log("halResourceIdFree: type=%u id=%u", (uint32_t)in->type, in->resourceId);

@@ -8,9 +8,10 @@
      碎片**,torch/_inductor(hints.py:40 import triton.backends.compiler 等)无法
      在其上工作,属环境既有缺陷,与 vdriver 无关。
 """
+import os
 import sys
 
-TRITON_STD_DIR = "/tmp/vd_triton_std"
+TRITON_STD_DIR = os.environ.get("VDRIVER_TRITON_STD", "/tmp/vd_triton_std")
 sys.path.insert(0, TRITON_STD_DIR)
 
 import torch  # noqa: E402

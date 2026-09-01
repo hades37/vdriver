@@ -7,3 +7,6 @@
  * (TsdOpen/AicpuSd/FlowGw),SetDevice 不再因 hdc 会话失败而 507033。
  * 与决策 D7/D8 一致:mock 场景无设备守护进程。
  */
+
+/* 显式占位符号:空翻译单元违反 ISO C 约束(终审风格②) */
+int vdriver_tsdclient_dummy;

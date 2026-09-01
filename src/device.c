@@ -81,7 +81,10 @@ DLLEXPORT drvError_t halDeviceClose(uint32_t devid, halDevCloseIn *in)
         return DRV_ERROR_INVALID_VALUE;
     }
     atomic_store(&g_dev_open[devid], 0);
-    vdriver_debug_log("halDeviceClose: devid=%u", devid);
+    /* 终审建议④:force reset 绕过流/资源 Free 时,关闭即清账防跨 reset 泄漏 */
+    vdriver_sqcq_release_all();
+    vdriver_res_release_all();
+    vdriver_debug_log("halDeviceClose: devid=%u(已清 SQCQ/资源账目)", devid);
     return DRV_ERROR_NONE;
 }
 
@@ -105,7 +108,7 @@ DLLEXPORT drvError_t halGetDeviceInfo(uint32_t devId, int32_t moduleType,
                     /* 语义陷阱(M3 实测抓到):SYSTEM/CORE_NUM 被 runtime 当 tsNumber
                      * (TS 调度组数,合法 [1,2],runtime.cc:774-784),不是 AI 核数;
                      * AI 核数走 MODULE_TYPE_AICORE/INFO_TYPE_CORE_NUM */
-                    *value = 2;
+                    *value = VDRIVER_DEF_TS_NUMBER;
                     break;
                 case INFO_TYPE_ADDR_MODE:    /* D4: UNIFIED(flat),命中 RUNTIME_WHEN_NO_VIRTUAL_MODEL_RETURN */
                     *value = (int64_t)ADDR_MODE_UNIFIED;
@@ -167,7 +170,7 @@ DLLEXPORT drvError_t halGetSocVersion(uint32_t devId, char *socVersion, uint32_t
         vdriver_debug_log("halGetSocVersion: buffer too small len=%u", len);
         return DRV_ERROR_INVALID_VALUE;
     }
-    (void)strcpy(socVersion, cached_soc);
+    (void)snprintf(socVersion, len, "%s", cached_soc);
     return DRV_ERROR_NONE;
 }
 
