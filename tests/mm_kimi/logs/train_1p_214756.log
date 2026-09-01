@@ -1,0 +1,1170 @@
+[vdriver] halGetSocVersion: cache=Ascend910B1
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+AttributeError: type object 'Tensor' has no attribute 'pad'
+[vdriver] halGetSocVersion: cache=Ascend910B1
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+AttributeError: type object 'Tensor' has no attribute 'pad'
+[INFO] Starting configuration loading...
+[INFO] Loaded configuration file: /mnt/e/ubuntu-workspace/CANN/vdriver/tests/mm_kimi/kimik3_1p_vdriver.yaml
+[WARNING] Field 'preprocess_parameters' exists but is not a BaseArguments subclass: typing.Optional[mindspeed_mm.fsdp.data.data_utils.func_utils.model_args.ProcessorArguments]
+[INFO] Automatically registered YAML field: data.dataset_param.preprocess_parameters.model_name_or_path (type: <class 'str'>, value: mindspeed_mm/fsdp/models/kimi_k3)
+[WARNING] Field 'preprocess_parameters' exists but is not a BaseArguments subclass: typing.Optional[mindspeed_mm.fsdp.data.data_utils.func_utils.model_args.ProcessorArguments]
+[INFO] Automatically registered YAML field: data.dataset_param.preprocess_parameters.trust_remote_code (type: <class 'bool'>, value: True)
+[WARNING] Field 'preprocess_parameters' exists but is not a BaseArguments subclass: typing.Optional[mindspeed_mm.fsdp.data.data_utils.func_utils.model_args.ProcessorArguments]
+[INFO] Automatically registered YAML field: data.dataset_param.preprocess_parameters.use_fast_tokenizer (type: <class 'bool'>, value: False)
+[WARNING] Field 'preprocess_parameters' exists but is not a BaseArguments subclass: typing.Optional[mindspeed_mm.fsdp.data.data_utils.func_utils.model_args.ProcessorArguments]
+[INFO] Automatically registered YAML field: data.dataset_param.preprocess_parameters.split_special_tokens (type: <class 'bool'>, value: False)
+[WARNING] Field 'preprocess_parameters' exists but is not a BaseArguments subclass: typing.Optional[mindspeed_mm.fsdp.data.data_utils.func_utils.model_args.ProcessorArguments]
+[INFO] Automatically registered YAML field: data.dataset_param.preprocess_parameters.image_max_pixels (type: <class 'int'>, value: 12544)
+[WARNING] Field 'preprocess_parameters' exists but is not a BaseArguments subclass: typing.Optional[mindspeed_mm.fsdp.data.data_utils.func_utils.model_args.ProcessorArguments]
+[INFO] Automatically registered YAML field: data.dataset_param.preprocess_parameters.image_min_pixels (type: <class 'int'>, value: 1024)
+[WARNING] Field 'preprocess_parameters' exists but is not a BaseArguments subclass: typing.Optional[mindspeed_mm.fsdp.data.data_utils.func_utils.model_args.ProcessorArguments]
+[INFO] Automatically registered YAML field: data.dataset_param.preprocess_parameters.video_max_pixels (type: <class 'int'>, value: 16384)
+[WARNING] Field 'preprocess_parameters' exists but is not a BaseArguments subclass: typing.Optional[mindspeed_mm.fsdp.data.data_utils.func_utils.model_args.ProcessorArguments]
+[INFO] Automatically registered YAML field: data.dataset_param.preprocess_parameters.video_min_pixels (type: <class 'int'>, value: 0)
+[WARNING] Field 'preprocess_parameters' exists but is not a BaseArguments subclass: typing.Optional[mindspeed_mm.fsdp.data.data_utils.func_utils.model_args.ProcessorArguments]
+[INFO] Automatically registered YAML field: data.dataset_param.preprocess_parameters.video_fps (type: <class 'float'>, value: 2.0)
+[WARNING] Field 'preprocess_parameters' exists but is not a BaseArguments subclass: typing.Optional[mindspeed_mm.fsdp.data.data_utils.func_utils.model_args.ProcessorArguments]
+[INFO] Automatically registered YAML field: data.dataset_param.preprocess_parameters.video_maxlen (type: <class 'int'>, value: 64)
+[INFO] Automatically registered YAML field: model.use_grouped_expert_matmul (type: <class 'bool'>, value: True)
+[INFO] Automatically registered YAML field: model.kda_implementation (type: <class 'str'>, value: eager)
+[INFO] Automatically registered YAML field: model.causal_conv1d_implementation (type: <class 'str'>, value: triton)
+[INFO] Automatically registered YAML field: model.situ_glu_implementation (type: <class 'str'>, value: eager)
+[INFO] Automatically registered YAML field: model.attn_res_implementation (type: <class 'str'>, value: eager)
+[INFO] Automatically registered YAML field: model.skip_flash_attn_recompute (type: <class 'bool'>, value: False)
+[INFO] Automatically registered YAML field: model.skip_kda_recompute (type: <class 'bool'>, value: False)
+[INFO] Automatically registered YAML field: features.recompute (type: <class 'bool'>, value: False)
+============================================================
+BaseArguments Configuration Manager Summary
+============================================================
+
+Configuration class: Arguments
+Configuration file: /mnt/e/ubuntu-workspace/CANN/vdriver/tests/mm_kimi/kimik3_1p_vdriver.yaml
+Allow YAML extensions: True
+Allow CLI override: True
+Strict CLI validation: True
+Allow registering YAML fields: True
+
+Defined field count: 224
+Dynamic field count: 18
+Total field count: 242
+
+
+============ Configuration Details ============
+parallel:
+  data_parallel_size: 1
+  fully_shard_parallel_size: 1
+  fsdp_plan:
+    ignored_modules: []
+    apply_modules: ['language_model.model', 'language_model.model.embed_tokens', 'language_model.model.layers.{*}', 'language_model.model.layers.{*}.block_sparse_moe.experts', 'language_model.lm_head']
+    param_dtype: bf16
+    reduce_dtype: fp32
+    output_dtype: None
+    cast_forward_inputs: True
+    reshard_after_forward: True
+    num_to_forward_prefetch: 0
+    num_to_backward_prefetch: 0
+    pregather: False
+    hook_modules: ['language_model.model.layers.{*}']
+    cpu_offload: False
+  tensor_parallel_size: 1
+  tp_plan:
+    colwise_parallel: []
+    rowwise_parallel: []
+    sequence_parallel: []
+  ring_attention_size: 1
+  ulysses_parallel_size: 1
+  expert_parallel_size: 1
+  expert_fully_shard_parallel_size: 1
+  expert_data_parallel_size: 1
+  ep_plan:
+    apply_modules: ['language_model.model.layers.{*}.block_sparse_moe.experts']
+    use_npu_fused_ops: True
+    dispatcher: alltoall
+    apply_efsdp_modules: []
+  recompute: False
+  recompute_plan:
+    apply_modules: []
+    use_reentrant: False
+  local_rank: 0
+  global_rank: 0
+  world_size: 1
+model:
+  model_id: kimi_k3
+  model_name_or_path: mindspeed_mm/fsdp/models/kimi_k3
+  trust_remote_code: True
+  attn_implementation: eager
+  freeze: []
+  dtype: None
+  mtp_num_layers: 0
+  mtp_loss_scaling_factor: 0.1
+  models: None
+  use_grouped_expert_matmul: True
+  kda_implementation: eager
+  causal_conv1d_implementation: triton
+  situ_glu_implementation: eager
+  attn_res_implementation: eager
+  skip_flash_attn_recompute: False
+  skip_kda_recompute: False
+data:
+  dataset_param:
+    dataset_type: huggingface
+    basic_parameters:
+      cache_dir: ./cache_dir_kimi_vdriver/
+      template: kimi_k3
+      chat_template: None
+      enable_thinking: False
+      dataset_dir: /tmp/mock_kimi
+      dataset: ['/tmp/mock_kimi/mock_data_pic_num_1_textlen_128.json']
+      cutoff_len: 512
+      train_on_prompt: False
+      mask_history: False
+      streaming: False
+      overwrite_cache: True
+      preprocessing_batch_size: 1000
+      preprocessing_num_workers: 1
+      max_samples: 2
+      tool_format: None
+      val_dataset: None
+      val_max_samples: None
+      val_rate: None
+      packing: None
+      neat_packing: False
+      preprocess_on_fly: True
+      async_preprocess: False
+      async_preprocess_buffer_size: None
+      stage: sft
+    preprocess_parameters:
+      model_name_or_path: mindspeed_mm/fsdp/models/kimi_k3
+      use_fast_tokenizer: False
+      split_special_tokens: False
+      image_resolution: 512
+      video_resolution: 128
+      image_max_pixels: 12544
+      image_min_pixels: 1024
+      video_max_pixels: 16384
+      video_min_pixels: 0
+      video_fps: 2.0
+      video_maxlen: 64
+      image_do_pan_and_scan: False
+      crop_to_patches: False
+      use_audio_in_video: False
+      audio_sampling_rate: 16000
+      trust_remote_code: True
+    attr:
+      ranking: False
+      system: None
+      images: images
+      videos: None
+      audios: None
+      prompt: None
+      query: None
+      response: None
+      history: None
+      messages: messages
+      tools: None
+      role_tag: role
+      content_tag: content
+      user_tag: user
+      assistant_tag: assistant
+      observation_tag: observation
+      function_tag: function_call
+      system_tag: system
+      chosen: None
+      rejected: None
+      formatting: sharegpt
+  val_dataset_param: None
+  dataloader_param:
+    dataloader_mode: sampler
+    sampler_type: BaseRandomBatchSampler
+    shuffle: True
+    drop_last: True
+    pin_memory: True
+    collate_param:
+      collator_id: qwen3vl
+      model_name: None
+      ignore_pad_token_for_loss: True
+      pad_to_multiple_of: 8
+    num_workers: 0
+    enable_preload: False
+training:
+  profile:
+    enable: False
+    start_step: 1
+    end_step: 2
+    save_path: ./profiling
+    record_shapes: True
+    with_memory: True
+    with_stack: True
+    ranks: [0]
+    _train_steps: -1
+    local_rank: 0
+    global_rank: 0
+    world_size: 1
+    profile_this_rank: False
+  lora:
+    enable: False
+    rank: 8
+    alpha: 16
+    target_modules: ['q_proj', 'k_proj', 'v_proj']
+    dropout: 0.0
+    init_lora_weights: True
+    pretrained_lora_path: None
+    disable_peft_moe_conversion: True
+  lr: 1e-05
+  lr_min: 0.0
+  lr_start: 0.0
+  weight_decay: 0.0
+  no_decay_modules: []
+  no_decay_params: []
+  optimizer: adamw
+  mem_fraction_static: 0.8
+  matched_adamw_rms: 0.2
+  muon_momentum: 0.95
+  ns_steps: 5
+  adam_fused: True
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_eps: 1e-08
+  clip_grad: 0.0
+  clip_grad_foreach: True
+  micro_batch_size: 1
+  gradient_accumulation_steps: 1
+  lr_warmup_ratio: 0.1
+  lr_decay_style: cosine
+  lr_decay_ratio: 1.0
+  enable_full_determinism: False
+  ckpt_manager: dcp
+  save_async: False
+  save_ckpt_dtype: None
+  load_checkpoint_path: None
+  save_steps: 0
+  seed: 42
+  max_steps: None
+  init_model_with_meta_device: True
+  train_iters: 2
+  train_epochs: None
+  load: None
+  load_format: auto
+  save_format: auto
+  load_strict: False
+  load_rank0_and_broadcast: False
+  no_load_optim: False
+  no_load_rng: False
+  save: None
+  no_save_optim: False
+  no_save_rng: False
+  log_interval: 1
+  save_interval: 10000
+  val_interval: 0
+  val_micro_batch_size: None
+  manual_gc_interval: 0
+  use_deter_comp: False
+  allow_hf32: None
+  plugin: ['mindspeed_mm/fsdp/models/kimi_k3', 'mindspeed_mm/fsdp/data/datasets/huggingface']
+  lr_scaling_plan: None
+  quantization_plan: QuantizeConfig(recipe_name=None, apply_modules=[], ignored_modules=[], quant_converters=[], extra_args={}, enable_fsdp_low_precision_all_gather=True, fsdp_low_precision_all_gather_mode='on-demand')
+  _train_steps: -1
+  local_rank: 0
+  global_rank: 0
+  world_size: 1
+  global_batch_size: 1
+tools:
+  profile:
+    enable: False
+    profile_type: static
+    ranks: [0]
+    static_param:
+      level: level1
+      with_stack: False
+      with_memory: False
+      record_shapes: False
+      with_cpu: False
+      save_path: ./profiling
+      start_step: 10
+      end_step: 11
+      data_simplification: False
+      aic_metrics_type: PipeUtilization
+      analyse_flag: True
+  memory_profile:
+    enable: False
+    start_step: 1
+    end_step: 2
+    save_path: ./memory_snapshot
+    dump_ranks: [0]
+    stacks: all
+    max_entries: None
+    mem_info: False
+features:
+  swap_plan:
+    capacity_mb: 1024.0
+    keep_rate: 0.0
+    enable_prefetch: True
+    cpu_arena_slab_size_mb: 2048.0
+    cpu_arena_pool_policy: standard
+    pin_memory: True
+    eviction_policy: fifo
+  recompute_plan:
+    apply_modules: []
+    use_reentrant: False
+    op_replay_scopes: []
+  loss_cfg:
+    loss_type: default
+    router_aux_loss_coef: 0.0
+    router_aux_loss_offload: False
+    router_aux_loss_type: local
+    router_aux_loss_use_attention_mask: False
+  enable_chunk_loss: False
+  enable_dynamic_chunk_loss: False
+  chunkloss_plan:
+    apply_module: lm_head
+    chunk_size: None
+    total_chunk_size: 4096
+    impl_type: legacy
+    vocab_tile_size: None
+  enable_activation_offload: False
+  activation_offload_plan:
+    apply_modules: None
+    impl: legacy
+  enable_chunk_mbs: False
+  chunkmbs_plan:
+    apply_modules: None
+    chunk_mbs: 1
+    batch_dim: 0
+    chunk_arg_indexs: [0]
+    chunk_kwarg_names: []
+  enable_ep_balance: False
+  ep_balance_plan:
+    max_dup_experts_num: 2
+  skip_moe_pad_tokens: False
+  recompute: False
+data.dataset_param.preprocess_parameters.model_name_or_path: mindspeed_mm/fsdp/models/kimi_k3
+data.dataset_param.preprocess_parameters.trust_remote_code: True
+data.dataset_param.preprocess_parameters.use_fast_tokenizer: False
+data.dataset_param.preprocess_parameters.split_special_tokens: False
+data.dataset_param.preprocess_parameters.image_max_pixels: 12544
+data.dataset_param.preprocess_parameters.image_min_pixels: 1024
+data.dataset_param.preprocess_parameters.video_max_pixels: 16384
+data.dataset_param.preprocess_parameters.video_min_pixels: 0
+data.dataset_param.preprocess_parameters.video_fps: 2.0
+data.dataset_param.preprocess_parameters.video_maxlen: 64
+
+
+============ Dynamic Fields ============
+ data.dataset_param.preprocess_parameters.image_max_pixels
+ data.dataset_param.preprocess_parameters.image_min_pixels
+ data.dataset_param.preprocess_parameters.model_name_or_path
+ data.dataset_param.preprocess_parameters.split_special_tokens
+ data.dataset_param.preprocess_parameters.trust_remote_code
+ data.dataset_param.preprocess_parameters.use_fast_tokenizer
+ data.dataset_param.preprocess_parameters.video_fps
+ data.dataset_param.preprocess_parameters.video_max_pixels
+ data.dataset_param.preprocess_parameters.video_maxlen
+ data.dataset_param.preprocess_parameters.video_min_pixels
+ features.recompute
+ model.attn_res_implementation
+ model.causal_conv1d_implementation
+ model.kda_implementation
+ model.situ_glu_implementation
+ model.skip_flash_attn_recompute
+ model.skip_kda_recompute
+ model.use_grouped_expert_matmul
+============================================================
+[vdriver] halDeviceOpen: devid=0
+[vdriver] halMemAlloc: size=16384 -> 0x5aec8d5ada00
+[vdriver] halMemAlloc: size=2096640 -> 0x5aec8d5b1e00
+[vdriver] halMemAlloc: size=6356992 -> 0x5aec8d834200
+[vdriver] halMemAlloc: size=6356992 -> 0x5aec8de44600
+[vdriver] halMemAlloc: size=1966080 -> 0x5aec8e874c00
+[vdriver] halMemAlloc: size=1966080 -> 0x5aec8ea55200
+[vdriver] halMemAlloc: size=3018752 -> 0x5aec8f43a000
+[vdriver] halMemAlloc: size=3018752 -> 0x5aec8f71b400
+[vdriver] halMemAlloc: size=65536 -> 0x5aec8fc04c00
+[vdriver] halMemAlloc: size=2097152 -> 0x5aec8fcc7200
+[vdriver] halResourceIdAlloc: type=0 -> id=0 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aec90055600
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=0 cqId=0 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=1 cqId=1 sqeDepth=1024
+[vdriver] halMemAlloc: size=2457600 -> 0x5aec90165c00
+[vdriver] halMemAlloc: size=1228800 -> 0x5aec903be000
+[vdriver] halResourceIdAlloc: type=0 -> id=1 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aec904efa00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=2 cqId=2 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=3 cqId=3 sqeDepth=1024
+[vdriver] halMemAlloc: size=2097152 -> 0x5aec90600200
+[vdriver] halMemAlloc: size=8 -> 0x5aec90800600
+[vdriver] halMemAlloc: size=512 -> 0x5aec9090f000
+[vdriver] halMemAlloc: size=16384 -> 0x5aec90910600
+[vdriver] halMemAlloc: size=2096640 -> 0x5aec90914e00
+[vdriver] halMemAlloc: size=6356992 -> 0x5aec90b97200
+[vdriver] halMemAlloc: size=6356992 -> 0x5aec911a7600
+[vdriver] halMemAlloc: size=1966080 -> 0x5aec91bda400
+[vdriver] halMemAlloc: size=1966080 -> 0x5aec91dba800
+[vdriver] halMemAlloc: size=3018752 -> 0x5aec9279f800
+[vdriver] halMemAlloc: size=3018752 -> 0x5aec92a80c00
+[vdriver] halMemAlloc: size=65536 -> 0x5aec92f6a400
+[vdriver] halMemAlloc: size=2097152 -> 0x5aec9302cc00
+[vdriver] halResourceIdAlloc: type=0 -> id=2 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aec933bb200
+[vdriver] halSqCqAllocate: type=0 tsId=1 sqId=4 cqId=4 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=1 sqId=5 cqId=5 sqeDepth=1024
+[vdriver] halMemAlloc: size=2457600 -> 0x5aec934cba00
+[vdriver] halMemAlloc: size=1228800 -> 0x5aec93723e00
+[vdriver] halResourceIdAlloc: type=0 -> id=3 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aec93855200
+[vdriver] halSqCqAllocate: type=0 tsId=1 sqId=6 cqId=6 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=1 sqId=7 cqId=7 sqeDepth=1024
+[vdriver] halMemAlloc: size=2097152 -> 0x5aec93965800
+[vdriver] halMemAlloc: size=8 -> 0x5aec93b65e00
+[vdriver] halMemAlloc: size=512 -> 0x5aec93c74800
+[vdriver] halResourceIdAlloc: type=0 -> id=4 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aec93cc8200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=8 cqId=8 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=9 cqId=9 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=5 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aec9448d400
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=10 cqId=10 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=11 cqId=11 sqeDepth=1024
+Successfully imported: mindspeed_mm.fsdp.models.kimi_k3
+Successfully imported: mindspeed_mm.fsdp.data.datasets.huggingface
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:08,763 INFO [torch_npu.env:15] => get env USE_TF = FALSE
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:08,771 INFO [datasets:114] => Disabling Tensorflow because USE_TORCH is set
+[vdriver-shim] 单卡:HCCL→gloo(无真设备通信,单 rank 恒等)
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:08,997 INFO [torch_npu.env:15] => get env MASTER_ADDR = localhost
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:08,997 INFO [torch_npu.env:15] => get env MASTER_PORT = 6099
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:08,997 INFO [torch_npu.env:15] => get env TORCHELASTIC_USE_AGENT_STORE = True
+[Gloo] Rank 0 is connected to 0 peer ranks. Expected number of connected peer ranks is : 0
+/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/distributed/device_mesh.py:603: UserWarning: Slicing a flattened dim from root mesh will be deprecated in PT 2.11. Users need to bookkeep the flattened mesh directly. 
+  sliced_mesh_layout = self._get_slice_mesh_layout(mesh_dim_names)
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:09,005 INFO [mindspeed_mm.fsdp.distributed.parallel_state:88] => Parallel state initialized:
+ [dp] = False | Group size: 1 | device mesh:DeviceMesh((dp=1), 'npu', stride=(0,)) 
+[cp] = False | Group size: 1 | device mesh:DeviceMesh((cp=1), 'npu', stride=(0,)) 
+[ulysses] = False | Group size: 1 | device mesh:DeviceMesh((ulysses=1), 'npu', stride=(1,)) 
+[ring] = False | Group size: 1 | device mesh:DeviceMesh((ring=1), 'npu', stride=(1,)) 
+[tp] = False | Group size: 1 | device mesh:DeviceMesh((tp=1), 'npu', stride=(1,)) 
+[edp] = False | Group size: 1 | device mesh:DeviceMesh((edp=1), 'npu', stride=(1,)) 
+[efsdp] = False | Group size: 1 | device mesh:DeviceMesh((efsdp=1), 'npu', stride=(1,)) 
+[ep] = False | Group size: 1 | device mesh:DeviceMesh((ep=1), 'npu', stride=(1,)) 
+[fsdp] = True | Group size: 1 | device mesh:DeviceMesh((dp_shard_cp=1), 'npu', stride=(0,)) 
+[hsdp] =  False | Group size: 1 | device mesh:DeviceMesh((dp_shard_cp=1), 'npu', stride=(0,)) 
+
+[2026-09-01 21:48:08] [WARNING] [11705] profiler.py: Profiler won't be using warmup, this can skew profiler results
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:09,007 INFO [mindspeed_mm.fsdp.models.modelhub:48] => > Loading AutoConfig from mindspeed_mm/fsdp/models/kimi_k3...
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:09,057 INFO [mindspeed_mm.fsdp.models.modelhub:48] => Building transformers model from configuration...
+KimiK3ForConditionalGeneration has generative capabilities, as `prepare_inputs_for_generation` is explicitly defined. However, it doesn't directly inherit from `GenerationMixin`. From 👉v4.50👈 onwards, `PreTrainedModel` will NOT inherit from `GenerationMixin`, and this model will lose the ability to call `generate` and other related functions.
+  - If you're using `trust_remote_code=True`, you can get rid of this warning by loading the model with an auto class. See https://huggingface.co/docs/transformers/en/model_doc/auto#auto-classes
+  - If you are the owner of the model architecture code, please modify your model class such that it inherits from `GenerationMixin` (after `PreTrainedModel`, otherwise you'll get an exception).
+  - If you are not the owner of the model architecture class, please contact the model code owner to update it.
+KimiK3ForConditionalGeneration has generative capabilities, as `prepare_inputs_for_generation` is explicitly defined. However, it doesn't directly inherit from `GenerationMixin`. From 👉v4.50👈 onwards, `PreTrainedModel` will NOT inherit from `GenerationMixin`, and this model will lose the ability to call `generate` and other related functions.
+  - If you're using `trust_remote_code=True`, you can get rid of this warning by loading the model with an auto class. See https://huggingface.co/docs/transformers/en/model_doc/auto#auto-classes
+  - If you are the owner of the model architecture code, please modify your model class such that it inherits from `GenerationMixin` (after `PreTrainedModel`, otherwise you'll get an exception).
+  - If you are not the owner of the model architecture class, please contact the model code owner to update it.
+<bound method Logger.info of <_EventLogger mindspeed_mm.fsdp.models.kimi_k3.modeling_kimi_linear (INFO)>> KimiK_3_MoeRMSNormGated use NPU fused ops
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:09,065 WARNING [mindspeed_mm.fsdp.models.kimi_k3.modeling_kimi_linear:328] => Ignoring the provided attention implementation eager
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:09,065 WARNING [mindspeed_mm.fsdp.models.kimi_k3.modeling_kimi_linear:328] => Using flash_attention_2 backend instead.
+[vdriver] halMemAlloc: size=2097152 -> 0x5aec9508e600
+[vdriver] halMemAlloc: size=2097152 -> 0x5aec9528ea00
+[vdriver] halMemAlloc: size=20971520 -> 0x5aec9548ee00
+[vdriver] halMemAlloc: size=169869312 -> 0x73744ddff200
+[vdriver] halMemAlloc: size=2097152 -> 0x5aec9688f400
+[vdriver] halMemAlloc: size=2097152 -> 0x5aec96a8f800
+[vdriver] halMemAlloc: size=31457280 -> 0x73745e1ff200
+[vdriver] halMemAlloc: size=20971520 -> 0x5aec96c8fc00
+[vdriver] halMemAlloc: size=169869312 -> 0x737443bfe200
+[vdriver] halMemAlloc: size=169869312 -> 0x7374399fd200
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x737460026400
+[vdriver] halMemAlloc: size=80 -> 0x737460026800
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x737460036a00
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x737460036e00
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x737460352c00
+[vdriver] halMemAlloc: size=80 -> 0x737460353000
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x737460353400
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x737460353a00
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x737460353e00
+[vdriver] halMemAlloc: size=80 -> 0x737460354200
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x737460354600
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x737460354a00
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] [vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+halMemAlloc: size=384 -> 0x73746035d600
+[vdriver] halMemAlloc: size=80 -> 0x73746035da00
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x73746035de00
+[vdriver] halMemAlloc: size=80 -> 0x73746035e200
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=384 -> 0x73746035e600
+[vdriver] halMemAlloc: size=80 -> 0x73746035ec00
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x73746035ec00
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x73746035f200
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x73746035f200
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x73746035f800
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x73746035f800
+[vdriver] halMemAlloc: size=80 -> 0x73746035fe00
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x73746035fe00
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x737460360400
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x737460360400
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x737460360a00
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x737460360a00
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x737460360e00
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x737460361200
+[vdriver] halMemAlloc: size=80 -> 0x737460361600
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604ec200
+[vdriver] halMemAlloc: size=80 -> 0x7374604ec600[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604eca00
+[vdriver] halMemAlloc: size=80 -> 0x7374604ece00
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604ed200
+[vdriver] halMemAlloc: size=80 -> 0x7374604ed600
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604ed600
+[vdriver] halMemAlloc: size=80 -> 0x7374604eda00
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=384 -> 0x7374604ede00
+[vdriver] halMemAlloc: size=80 -> 0x7374604ee200
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fc600
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x7374604fca00
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=384 -> 0x7374604fce00
+[vdriver] halMemAlloc: size=80 -> 0x7374604fd200
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fd600
+[vdriver] halMemAlloc: size=80 -> 0x7374604fda00
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fda00
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x7374604fe000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe000
+[vdriver] halMemAlloc: size=80 -> 0x7374604fe400
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x7374604fec00
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] [vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] torch.npu.set_rng_state 跳过:'NoneType' object has no attribute 'index'
+[vdriver] halMemAlloc: size=384 -> 0x7374604fe800
+[vdriver] halMemAlloc: size=80 -> 0x7374604ff000
+[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:10,191 INFO [__main__:48] => Prepare data
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:10,519 INFO [transformers_modules.kimi_k3.tokenization_kimi:113] => Reloaded tiktoken model from mindspeed_mm/fsdp/models/kimi_k3/tiktoken.model
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:10,519 INFO [transformers_modules.kimi_k3.tokenization_kimi:119] => #words: 163840 - BOS ID: 163584 - EOS ID: 163585
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:11,027 INFO [transformers_modules.kimi_k3.tokenization_kimi:113] => Reloaded tiktoken model from mindspeed_mm/fsdp/models/kimi_k3/tiktoken.model
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:11,028 INFO [transformers_modules.kimi_k3.tokenization_kimi:119] => #words: 163840 - BOS ID: 163584 - EOS ID: 163585
+2026-09-01 21:48:11,527 - template - 776 - INFO - Replace eos token: <|end_of_msg|>
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:11,527 INFO [mindspeed_mm.fsdp.data.data_utils.func_utils.template:776] => Replace eos token: <|end_of_msg|>
+Converting format of dataset (num_proc=1):   0%|          | 0/2 [00:00<?, ? examples/s][vdriver] halGetSocVersion: cache=Ascend910B1
+[vdriver] halGetSocVersion: cache=Ascend910B1
+[vdriver] halGetSocVersion: cache=Ascend910B1
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+AttributeError: type object 'Tensor' has no attribute 'pad'
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+AttributeError: type object 'Tensor' has no attribute 'pad'
+Error in sitecustomize; set PYTHONVERBOSE for traceback:
+AttributeError: type object 'Tensor' has no attribute 'pad'
+Converting format of dataset (num_proc=1): 100%|██████████| 2/2 [00:06<00:00,  3.33s/ examples]Converting format of dataset (num_proc=1): 100%|██████████| 2/2 [00:08<00:00,  4.33s/ examples]
+training example:
+input_ids:
+[163587, 2778, 6244, 878, 2482, 1, 163589, 163602, 4017, 220, 13646, 87, 13646, 163603, 163605, 163605, 163605, 163605, 163605, 163605, 163605, 163605, 163605, 163605, 163605, 163605, 163605, 163605, 163605, 163605, 163604, 198, 13, 7552, 13660, 276, 4082, 13, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 163588, 2778, 163589, 163586, 163587, 2778, 6244, 878, 69702, 1, 163589, 163587, 12092, 163589, 32, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 163588, 12092, 163589, 163588, 2778, 163589, 163586]
+inputs:
+<|open|> message role="user" <|sep|> <|media_begin|>image 112x112<|media_content|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_pad|><|media_end|>
+. Please describe the image. A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time <|close|> message <|sep|> <|end_of_msg|> <|open|> message role="assistant" <|sep|> <|open|> response <|sep|> A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time <|close|> response <|sep|> <|close|> message <|sep|> <|end_of_msg|>
+label_ids:
+[-100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, -100, 32, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 401, 7718, 27632, 306, 276, 5968, 318, 1169, 163588, 12092, 163589, 163588, 2778, 163589, 163586]
+labels:
+A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time A moment frozen in the flow of time <|close|> response <|sep|> <|close|> message <|sep|> <|end_of_msg|>
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:22,246 INFO [transformers_modules.kimi_k3.tokenization_kimi:113] => Reloaded tiktoken model from mindspeed_mm/fsdp/models/kimi_k3/tiktoken.model
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:22,246 INFO [transformers_modules.kimi_k3.tokenization_kimi:119] => #words: 163840 - BOS ID: 163584 - EOS ID: 163585
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:22,703 INFO [transformers_modules.kimi_k3.tokenization_kimi:113] => Reloaded tiktoken model from mindspeed_mm/fsdp/models/kimi_k3/tiktoken.model
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:22,703 INFO [transformers_modules.kimi_k3.tokenization_kimi:119] => #words: 163840 - BOS ID: 163584 - EOS ID: 163585
+2026-09-01 21:48:23,164 - template - 776 - INFO - Replace eos token: <|end_of_msg|>
+[Rank 0 | Local Rank 0] 2026-09-01 21:48:23,164 INFO [mindspeed_mm.fsdp.data.data_utils.func_utils.template:776] => Replace eos token: <|end_of_msg|>
+/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torchdata/stateful_dataloader/stateful_dataloader.py:431: UserWarning: pin_memory_device is deprecated, the current accelerator will be used as the device,ignore pin_memory_device='npu'.
+  super().__init__(loader)
+[vdriver] halMemAlloc: size=2048 -> 0x5aeca3be2e00
+[vdriver] halMemAlloc: size=2048 -> 0x5aeca6b35a00
+[vdriver] halMemAlloc: size=2048 -> 0x5aeca3e2dc00
+[vdriver] halMemAlloc: size=262144 -> 0x5aeca399c400
+[vdriver] halMemAlloc: size=32 -> 0x5aeca6b30800
+[vdriver] halResourceIdAlloc: type=0 -> id=6 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c80200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=12 cqId=12 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=13 cqId=13 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=7 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3be2200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=14 cqId=14 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=15 cqId=15 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=8 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c12c00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=16 cqId=16 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=17 cqId=17 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=9 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c18200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=18 cqId=18 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=19 cqId=19 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=10 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3bffa00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=20 cqId=20 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=21 cqId=21 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=11 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c18800
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=22 cqId=22 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=23 cqId=23 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=12 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3bdd800
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=24 cqId=24 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=25 cqId=25 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=13 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c1ce00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=26 cqId=26 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=27 cqId=27 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=14 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c1d200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=28 cqId=28 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=29 cqId=29 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=15 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c43e00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=30 cqId=30 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=31 cqId=31 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=16 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c44200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=32 cqId=32 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=33 cqId=33 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=17 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3d9cc00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=34 cqId=34 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=35 cqId=35 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=18 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3d9d000
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=36 cqId=36 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=37 cqId=37 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=19 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3be6e00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=38 cqId=38 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=39 cqId=39 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=20 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3be7200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=40 cqId=40 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=41 cqId=41 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=21 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3bf3c00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=42 cqId=42 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=43 cqId=43 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=22 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3bf4000
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=44 cqId=44 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=45 cqId=45 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=23 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2a77000
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=46 cqId=46 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=47 cqId=47 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=24 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2a77400
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=48 cqId=48 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=49 cqId=49 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=25 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c87c00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=50 cqId=50 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=51 cqId=51 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=26 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c88000
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=52 cqId=52 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=53 cqId=53 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=27 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca491b000
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=54 cqId=54 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=55 cqId=55 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=28 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c4b800
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=56 cqId=56 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=57 cqId=57 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=29 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca491b400
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=58 cqId=58 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=59 cqId=59 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=30 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca4940200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=60 cqId=60 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=61 cqId=61 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=31 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca4940600
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=62 cqId=62 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=63 cqId=63 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=32 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2e8da00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=64 cqId=64 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=65 cqId=65 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=33 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2e8de00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=66 cqId=66 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=67 cqId=67 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=34 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2e8e200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=68 cqId=68 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=69 cqId=69 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=35 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2a93200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=70 cqId=70 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=71 cqId=71 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=36 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2a93600
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=72 cqId=72 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=73 cqId=73 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=37 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c63a00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=74 cqId=74 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=75 cqId=75 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=38 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2a93a00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=76 cqId=76 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=77 cqId=77 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=39 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca399ba00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=78 cqId=78 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=79 cqId=79 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=40 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca399be00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=80 cqId=80 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=81 cqId=81 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=41 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2ad5a00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=82 cqId=82 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=83 cqId=83 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=42 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2ad5e00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=84 cqId=84 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=85 cqId=85 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=43 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2ad6200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=86 cqId=86 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=87 cqId=87 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=44 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c7f200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=88 cqId=88 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=89 cqId=89 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=45 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c7f600
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=90 cqId=90 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=91 cqId=91 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=46 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c7fa00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=92 cqId=92 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=93 cqId=93 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=47 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aec79080e00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=94 cqId=94 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=95 cqId=95 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=48 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2a8e200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=96 cqId=96 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=97 cqId=97 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=49 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c58e00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=98 cqId=98 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=99 cqId=99 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=50 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c59200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=100 cqId=100 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=101 cqId=101 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=51 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c59600
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=102 cqId=102 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=103 cqId=103 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=52 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2a8e600
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=104 cqId=104 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=105 cqId=105 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=53 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2a8ea00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=106 cqId=106 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=107 cqId=107 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=54 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2a8ee00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=108 cqId=108 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=109 cqId=109 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=55 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca56b9800
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=110 cqId=110 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=111 cqId=111 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=56 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca56b9c00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=112 cqId=112 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=113 cqId=113 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=57 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca56ba000
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=114 cqId=114 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=115 cqId=115 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=58 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3e2c000
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=116 cqId=116 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=117 cqId=117 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=59 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3e2c400
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=118 cqId=118 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=119 cqId=119 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=60 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3e2c800
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=120 cqId=120 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=121 cqId=121 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=61 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c14400
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=122 cqId=122 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=123 cqId=123 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=62 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c14800
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=124 cqId=124 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=125 cqId=125 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=63 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c14c00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=126 cqId=126 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=127 cqId=127 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=64 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca3c15000
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=128 cqId=128 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=129 cqId=129 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=65 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca489fe00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=130 cqId=130 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=131 cqId=131 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=66 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca48a0200
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=132 cqId=132 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=133 cqId=133 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=67 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca48a0600
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=134 cqId=134 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=135 cqId=135 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=68 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca48a0a00
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=136 cqId=136 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=137 cqId=137 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=0 -> id=69 (specified=0)
+[vdriver] halMemAlloc: size=2 -> 0x5aeca2a88000
+[vdriver] halSqCqAllocate: type=0 tsId=0 sqId=138 cqId=138 sqeDepth=2048
+[vdriver] halSqCqAllocate: type=2 tsId=0 sqId=139 cqId=139 sqeDepth=1024
+[vdriver] halResourceIdAlloc: type=1 -> id=0 (specified=0)
+[vdriver] halResourceIdAlloc: type=1 -> id=1 (specified=0)
+[vdriver] halResourceIdAlloc: type=1 -> id=2 (specified=0)
+[vdriver] halMemAlloc: size=2097152 -> 0x5aec9de5d600
+[vdriver] halMemAlloc: size=2097152 -> 0x5aec9e219c00
+[vdriver] halResourceIdFree: type=1 id=2
+[vdriver] halResourceIdAlloc: type=1 -> id=3 (specified=0)
+[vdriver] halResourceIdFree: type=1 id=0
+[vdriver] halResourceIdAlloc: type=1 -> id=4 (specified=0)
+[vdriver] halResourceIdFree: type=1 id=1
+[vdriver] halResourceIdAlloc: type=1 -> id=5 (specified=0)
+[vdriver] halMemAlloc: size=2097152 -> 0x737460aaee00
+[vdriver] halResourceIdFree: type=1 id=4
+[vdriver] halResourceIdAlloc: type=1 -> id=6 (specified=0)
+[vdriver] halResourceIdFree: type=1 id=3
+[vdriver] halResourceIdAlloc: type=1 -> id=7 (specified=0)
+[vdriver] halResourceIdFree: type=1 id=5
+[vdriver] halResourceIdAlloc: type=1 -> id=8 (specified=0)
+[vdriver] halMemAlloc: size=2097152 -> 0x7374611a7e00
+[vdriver] halMemAlloc: size=2097152 -> 0x73746147fa00
+/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/models/kimi_k3/modeling_kimi_k3.py:505: UserWarning: Cannot create tensor with interal format while allow_internel_format=False, tensor will be created with base format. (Triggered internally at ../torch_npu/csrc/aten/common/TensorFactories.cpp:340.)
+  x_pos = flat_pos % self.max_width
+[vdriver] halMemAlloc: size=102760448 -> 0x7373e5dff200
+[vdriver] halMemAlloc: size=2097152 -> 0x737461c10000
+[vdriver] halMemAlloc: size=102760448 -> 0x7373dfbfe200
+[vdriver] halMemAlloc: size=136314880 -> 0x7373d79fd200
+[vdriver] halMemAlloc: size=17 -> 0x737461c04600
+[vdriver] halMemAlloc: size=13 -> 0x737461c01e00
+[vdriver] halMemAlloc: size=256 -> 0x7374622a2c00
+[vdriver] halMemAlloc: size=2097152 -> 0x73746258f400
+[vdriver] halMemAlloc: size=256 -> 0x73746278f800
+[vdriver] halMemAlloc: size=2097152 -> 0x737462d3e400
+[vdriver] halMemAlloc: size=256 -> 0x737462d08000
+[vdriver] halMemAlloc: size=3816208 -> 0x737463a15400
+[vdriver] halMemAlloc: size=2097152 -> 0x7373d08ca800
+[vdriver] halMemAlloc: size=2097152 -> 0x7373d0bb5a00
+[vdriver] halMemAlloc: size=256 -> 0x7373d08a9600
+[vdriver] halMemAlloc: size=256 -> 0x7373d08a8a00
+[vdriver] halMemAlloc: size=2097152 -> 0x7373d11c3400
+[vdriver] halMemAlloc: size=256 -> 0x7373d14f9a00
+[vdriver] halMemAlloc: size=256 -> 0x7373d1531400
+[vdriver-shim] extract: pv=T(64, 3, 14, 14)/bfloat16 grid=T(1, 3)/int64 -> out=[T(16, 4, 256)/bfloat16]
+[vdriver-shim] projector: in=[T(16, 4, 256)/bfloat16] -> out=[T(16, 256)/bfloat16]
+[vdriver-shim] merge: feats=[T(16, 256)/bfloat16] embeds=T(1, 208, 256)/bfloat16 ids=T(1, 208)/int64 mask=T(1, 208)/int64
+[vdriver] halMemAlloc: size=2097152 -> 0x7373d1987000
+[vdriver] halMemAlloc: size=256 -> 0x7373d1b87600
+[vdriver] halMemAlloc: size=256 -> 0x7373d1b89000
+[vdriver] halMemAlloc: size=256 -> 0x7373d1bda400
+[vdriver] halMemAlloc: size=2457600 -> 0x7373d1c0dc00
+[vdriver] halMemAlloc: size=2097152 -> 0x7373d2067c00
+[vdriver] halMemAlloc: size=18 -> 0x7373d204da00
+[vdriver] halMemAlloc: size=13 -> 0x7373d204de00
+[vdriver] halMemAlloc: size=20 -> 0x7373d204e200
+[vdriver] halMemAlloc: size=11 -> 0x7373d204e600
+[vdriver] halMemAlloc: size=22 -> 0x7373d204ea00
+[vdriver] halMemAlloc: size=17 -> 0x7373d204ee00
+[vdriver] halMemAlloc: size=8 -> 0x7373d204f200
+[vdriver] halMemAlloc: size=12 -> 0x7373d204f600
+[vdriver] halMemAlloc: size=15 -> 0x7373d204fa00
+[vdriver] halMemAlloc: size=15 -> 0x7373d204fe00
+[vdriver] halMemAlloc: size=13 -> 0x7373d2050200
+[vdriver] halMemAlloc: size=16 -> 0x7373d2050600
+[vdriver] halMemAlloc: size=14 -> 0x7373d2050a00
+[vdriver] halMemAlloc: size=8 -> 0x7373d2050e00
+[vdriver] halMemAlloc: size=17 -> 0x7373d2051200
+[vdriver] halMemAlloc: size=9 -> 0x7373d2051600
+[vdriver] halMemAlloc: size=10 -> 0x7373d2051a00
+[vdriver] halMemAlloc: size=14 -> 0x7373d2051e00
+[vdriver] halMemAlloc: size=5 -> 0x7373d2052200
+[vdriver] halMemAlloc: size=29 -> 0x7373d2052600
+[vdriver] halMemAlloc: size=30 -> 0x7373d2052a00
+[vdriver] halMemAlloc: size=9 -> 0x7373d2052e00
+[vdriver] halMemAlloc: size=18 -> 0x7373d2053200
+[vdriver] halMemAlloc: size=21 -> 0x7373d2053600
+[vdriver] halMemAlloc: size=16 -> 0x7373d2053a00
+[vdriver] halMemAlloc: size=15 -> 0x7373d2053e00
+[vdriver] halMemAlloc: size=7 -> 0x7373d2054200
+[vdriver] halMemAlloc: size=14 -> 0x7373d2054600
+[vdriver] halResourceIdFree: type=1 id=6
+[vdriver] halResourceIdAlloc: type=1 -> id=9 (specified=0)
+[vdriver] halResourceIdFree: type=1 id=7
+[vdriver] halResourceIdAlloc: type=1 -> id=10 (specified=0)
+[vdriver] halMemAlloc: size=2097152 -> 0x5aeca8bdb400
+[vdriver] halResourceIdFree: type=1 id=8
+[vdriver] halResourceIdAlloc: type=1 -> id=11 (specified=0)
+[vdriver] halResourceIdFree: type=1 id=9
+[vdriver] halResourceIdAlloc: type=1 -> id=12 (specified=0)
+[vdriver] halMemAlloc: size=256 -> 0x7373d25c5a00
+[vdriver] halMemAlloc: size=256 -> 0x7373d25c6400
+[vdriver-shim] conv1d varlen: x=(1, 203, 256) cu=[0, 0]
+[vdriver-shim] conv1d varlen: x=(1, 203, 256) cu=[0, 0]
+[vdriver-shim] conv1d varlen: x=(1, 203, 256) cu=[0, 0]
+[vdriver] halMemAlloc: size=2097152 -> 0x5aecac537e00
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/train/trainer.py", line 532, in <module>
+[rank0]:     trainer.train()
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/train/trainer.py", line 525, in train
+[rank0]:     self.trainer.train()
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/train/train_engine.py", line 291, in train
+[rank0]:     loss_dict = self.train_step(train_dataloader_iter)
+[rank0]:                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/train/train_engine.py", line 178, in train_step
+[rank0]:     output = self.model(**batch_data, use_cache=False)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1882, in _call_impl
+[rank0]:     return inner()
+[rank0]:            ^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1830, in inner
+[rank0]:     result = forward_call(*args, **kwargs)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/models/kimi_k3/modeling_kimi_k3.py", line 1416, in forward
+[rank0]:     outputs = self.language_model(
+[rank0]:               ^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/transformers/utils/generic.py", line 940, in wrapper
+[rank0]:     output = func(self, *args, **kwargs)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/models/kimi_k3/modeling_kimi_linear.py", line 1575, in forward
+[rank0]:     outputs = self.model(
+[rank0]:               ^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1882, in _call_impl
+[rank0]:     return inner()
+[rank0]:            ^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1830, in inner
+[rank0]:     result = forward_call(*args, **kwargs)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/transformers/utils/generic.py", line 1064, in wrapper
+[rank0]:     outputs = func(self, *args, **kwargs)
+[rank0]:               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/models/kimi_k3/modeling_kimi_linear.py", line 1463, in forward
+[rank0]:     hidden_states, block_residual = decoder_layer(
+[rank0]:                                     ^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1882, in _call_impl
+[rank0]:     return inner()
+[rank0]:            ^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1830, in inner
+[rank0]:     result = forward_call(*args, **kwargs)
+[rank0]:              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/models/kimi_k3/modeling_kimi_linear.py", line 1191, in forward
+[rank0]:     return self._forward_attn_residual(
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/models/kimi_k3/modeling_kimi_linear.py", line 1275, in _forward_attn_residual
+[rank0]:     hidden_states = self.self_attn(
+[rank0]:                     ^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/models/kimi_k3/modeling_kimi_linear.py", line 913, in forward
+[rank0]:     o = self.o_norm(o, g)
+[rank0]:         ^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/mnt/e/ubuntu-workspace/MindSpeed-MM/mindspeed_mm/fsdp/models/kimi_k3/modeling_kimi_linear.py", line 124, in forward
+[rank0]:     hidden_states = hidden_states * F.sigmoid(gate)
+[rank0]:                     ~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~
+[rank0]: RuntimeError: The size of tensor a (0) must match the size of tensor b (203) at non-singleton dimension 1
+[vdriver] halSqCqFree: 未命中 sqId=0(type=2 tsId=0)
+Fatal Python error: Segmentation fault
+
+Thread 0x000073745cdfe640 (most recent call first):
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/threading.py", line 359 in wait
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/threading.py", line 655 in wait
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/tqdm/_monitor.py", line 69 in run
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Current thread 0x000073757a77e740 (most recent call first):
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch_npu/__init__.py", line 287 in _npu_shutdown
+
+Extension modules: numpy.core._multiarray_umath, numpy.core._multiarray_tests, numpy.linalg._umath_linalg, numpy.fft._pocketfft_internal, numpy.random._common, numpy.random.bit_generator, numpy.random._bounded_integers, numpy.random._mt19937, numpy.random.mtrand, numpy.random._philox, numpy.random._pcg64, numpy.random._sfc64, numpy.random._generator, torch._C, torch._C._dynamo.autograd_compiler, torch._C._dynamo.eval_frame, torch._C._dynamo.guards, torch._C._dynamo.utils, torch._C._fft, torch._C._linalg, torch._C._nested, torch._C._nn, torch._C._sparse, torch._C._special, torch_npu._C, markupsafe._speedups, yaml._yaml, charset_normalizer.md, charset_normalizer.cd, requests.packages.charset_normalizer.md, requests.packages.chardet.md, requests.packages.charset_normalizer.cd, requests.packages.chardet.cd, regex._regex, PIL._imaging, scipy._lib._ccallback_c, scipy.linalg._fblas, scipy.linalg._flapack, scipy.linalg.cython_lapack, scipy.linalg._cythonized_array_utils, scipy.linalg._solve_toeplitz, scipy.linalg._decomp_lu_cython, scipy.linalg._matfuncs_sqrtm_triu, scipy.linalg.cython_blas, scipy.linalg._matfuncs_expm, scipy.linalg._decomp_update, scipy.sparse._sparsetools, _csparsetools, scipy.sparse._csparsetools, scipy.sparse.linalg._dsolve._superlu, scipy.sparse.linalg._eigen.arpack._arpack, scipy.sparse.linalg._propack._spropack, scipy.sparse.linalg._propack._dpropack, scipy.sparse.linalg._propack._cpropack, scipy.sparse.linalg._propack._zpropack, scipy.sparse.csgraph._tools, scipy.sparse.csgraph._shortest_path, scipy.sparse.csgraph._traversal, scipy.sparse.csgraph._min_spanning_tree, scipy.sparse.csgraph._flow, scipy.sparse.csgraph._matching, scipy.sparse.csgraph._reordering, scipy.optimize._minpack2, scipy.optimize._group_columns, scipy._lib.messagestream, scipy.optimize._trlib._trlib, scipy.optimize._lbfgsb, _moduleTNC, scipy.optimize._moduleTNC, scipy.optimize._cobyla, scipy.optimize._slsqp, scipy.optimize._minpack, scipy.optimize._lsq.givens_elimination, scipy.optimize._zeros, scipy.optimize._highs.cython.src._highs_wrapper, scipy.optimize._highs._highs_wrapper, scipy.optimize._highs.cython.src._highs_constants, scipy.optimize._highs._highs_constants, scipy.linalg._interpolative, scipy.optimize._bglu_dense, scipy.optimize._lsap, scipy.spatial._ckdtree, scipy.spatial._qhull, scipy.spatial._voronoi, scipy.spatial._distance_wrap, scipy.spatial._hausdorff, scipy.special._ufuncs_cxx, scipy.special._cdflib, scipy.special._ufuncs, scipy.special._specfun, scipy.special._comb, scipy.special._ellip_harm_2, scipy.spatial.transform._rotation, scipy.optimize._direct, PIL._imagingft, av._core, av.logging, av.buffer, av.audio.format, av.error, av.dictionary, av.container.pyio, av.format, av.index, av.utils, av.stream, av.container.streams, av.sidedata.encparams, av.sidedata.motionvectors, av.sidedata.sidedata, av.opaque, av.rational, av.packet, av.container.input, av.bitstream, av.container.output, av.container.core, av.codec.context, av.video.format, av.video.reformatter, av.plane, av.video.plane, av.video.frame, av.video.stream, av.codec.hwaccel, av.codec.codec, av.frame, av.audio.layout, av.audio.plane, av.audio.frame, av.audio.stream, av.filter.link, av.filter.context, av.filter.graph, av.filter.filter, av.filter.loudnorm, av.audio.resampler, av.audio.codeccontext, av.audio.fifo, av.device, av.video.codeccontext, google._upb._message, scipy.ndimage._nd_image, _ni_label, scipy.ndimage._ni_label, scipy.integrate._odepack, scipy.integrate._quadpack, scipy.integrate._vode, scipy.integrate._dop, scipy.integrate._lsoda, scipy.special.cython_special, scipy.stats._stats, scipy.stats.beta_ufunc, scipy.stats._boost.beta_ufunc, scipy.stats.binom_ufunc, scipy.stats._boost.binom_ufunc, scipy.stats.nbinom_ufunc, scipy.stats._boost.nbinom_ufunc, scipy.stats.hypergeom_ufunc, scipy.stats._boost.hypergeom_ufunc, scipy.stats.ncf_ufunc, scipy.stats._boost.ncf_ufunc, scipy.stats.ncx2_ufunc, scipy.stats._boost.ncx2_ufunc, scipy.stats.nct_ufunc, scipy.stats._boost.nct_ufunc, scipy.stats.skewnorm_ufunc, scipy.stats._boost.skewnorm_ufunc, scipy.stats.invgauss_ufunc, scipy.stats._boost.invgauss_ufunc, scipy.interpolate._fitpack, scipy.interpolate.dfitpack, scipy.interpolate._bspl, scipy.interpolate._ppoly, scipy.interpolate.interpnd, scipy.interpolate._rbfinterp_pythran, scipy.interpolate._rgi_cython, scipy.stats._biasedurn, scipy.stats._levy_stable.levyst, scipy.stats._stats_pythran, scipy._lib._uarray._uarray, scipy.stats._ansari_swilk_statistics, scipy.stats._sobol, scipy.stats._qmc_cy, scipy.stats._mvn, scipy.stats._rcont.rcont, scipy.stats._unuran.unuran_wrapper, sklearn.__check_build._check_build, psutil._psutil_linux, psutil._psutil_posix, pyarrow.lib, _cyutility, pandas._libs._cyutility, pandas._libs.tslibs.ccalendar, pandas._libs.tslibs.np_datetime, pandas._libs.tslibs.dtypes, pandas._libs.tslibs.base, pandas._libs.tslibs.nattype, pandas._libs.tslibs.timezones, pandas._libs.properties, pandas._libs.tslibs.fields, pandas._libs.tslibs.timedeltas, pandas._libs.tslibs.tzconversion, pandas._libs.tslibs.timestamps, pandas._libs.tslibs.offsets, pandas._libs.tslibs.strptime, pandas._libs.tslibs.parsing, pandas._libs.tslibs.conversion, pandas._libs.tslibs.period, pandas._libs.tslibs.vectorized, pandas._libs.ops_dispatch, pandas._libs.missing, pandas._libs.hashtable, pandas._libs.algos, pandas._libs.interval, pandas._libs.lib, pyarrow._compute, pandas._libs.ops, pandas._libs.hashing, pandas._libs.arrays, pandas._libs.tslib, pandas._libs.sparse, pandas._libs.internals, pandas._libs.indexing, pandas._libs.index, pandas._libs.writers, pandas._libs.join, pandas._libs.window.aggregations, pandas._libs.window.indexers, pandas._libs.reshape, pandas._libs.groupby, pandas._libs.json, pandas._libs.parsers, pandas._libs.testing, sklearn._cyutility, sklearn.utils._isfinite, sklearn.utils.sparsefuncs_fast, sklearn.utils.murmurhash, sklearn.utils._openmp_helpers, sklearn.metrics.cluster._expected_mutual_info_fast, sklearn.metrics._dist_metrics, sklearn.metrics._pairwise_distances_reduction._datasets_pair, sklearn.utils._cython_blas, sklearn.metrics._pairwise_distances_reduction._base, sklearn.metrics._pairwise_distances_reduction._middle_term_computer, sklearn.utils._heap, sklearn.utils._sorting, sklearn.metrics._pairwise_distances_reduction._argkmin, sklearn.metrics._pairwise_distances_reduction._argkmin_classmode, sklearn.utils._vector_sentinel, sklearn.metrics._pairwise_distances_reduction._radius_neighbors, sklearn.metrics._pairwise_distances_reduction._radius_neighbors_classmode, sklearn.metrics._pairwise_fast, sklearn.preprocessing._csr_polynomial_expansion, sklearn.preprocessing._target_encoder_fast, pyarrow._acero, pyarrow._fs, pyarrow._csv, pyarrow._json, pyarrow._substrait, pyarrow._dataset, pyarrow._dataset_orc, pyarrow._parquet, pyarrow._azurefs, pyarrow._hdfs, pyarrow._gcsfs, pyarrow._s3fs, pyarrow._parquet_encryption, pyarrow._dataset_parquet_encryption, pyarrow._dataset_parquet, multidict._multidict, yarl._quoting_c, propcache._helpers_c, aiohttp._http_writer, aiohttp._http_parser, aiohttp._websocket.mask, aiohttp._websocket.reader_c, frozenlist._frozenlist, xxhash._xxhash, scipy.io.matlab._mio_utils, scipy.io.matlab._streams, scipy.io.matlab._mio5_utils (total: 282)
+E0901 21:48:36.531000 11670 site-packages/torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: -11) local_rank: 0 (pid: 11705) of binary: /root/miniconda3/envs/mindspeed/bin/python3.12
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/mindspeed/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/distributed/run.py", line 991, in main
+    run(args)
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/distributed/run.py", line 982, in run
+    elastic_launch(
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/miniconda3/envs/mindspeed/lib/python3.12/site-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+=======================================================
+mindspeed_mm/fsdp/train/trainer.py FAILED
+-------------------------------------------------------
+Failures:
+  <NO_OTHER_FAILURES>
+-------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-09-01_21:48:36
+  host      : hades.localdomain
+  rank      : 0 (local_rank: 0)
+  exitcode  : -11 (pid: 11705)
+  error_file: <N/A>
+  traceback : Signal 11 (SIGSEGV) received by PID 11705
+=======================================================
+[ERROR] 2026-09-01-21:48:36 (PID:11670, Device:-1, RankID:-1) ERR99999 UNKNOWN applicaiton exception

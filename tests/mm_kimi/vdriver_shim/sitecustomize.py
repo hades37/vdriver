@@ -8,8 +8,10 @@
      实现(MM 仓 conv1d 仅 triton/ascendc 两实现,mindspeed_ops 未安装)。
 """
 
+import faulthandler
 import os
 import sys
+faulthandler.enable()
 import types
 
 _STD_TRITON = "/tmp/vd_triton_std"
@@ -41,11 +43,39 @@ def _eager_causal_conv1d(
     import torch
     import torch.nn.functional as F
 
-    if cu_seqlens is not None:
-        raise NotImplementedError("vdriver: varlen causal_conv1d 未实现(训练用例不触发)")
-
     _, _, dim = x.shape
     kernel = weight.shape[0]
+
+    if cu_seqlens is not None:
+        # 变长打包:x [1,T,D],cu_seqlens [B+1];逐段因果卷积后拼接
+        import torch.nn.functional as F
+        cu = cu_seqlens.cpu().tolist() if torch.is_tensor(cu_seqlens) else list(cu_seqlens)
+        sys.stderr.write(f"[vdriver-shim] conv1d varlen: x={tuple(x.shape)} cu={cu}\n")
+        w = weight.transpose(0, 1).unsqueeze(1)  # [D,1,W]
+        outs = []
+        for i in range(len(cu) - 1):
+            seg = x[0, cu[i]:cu[i + 1], :]            # [Ti,D]
+            if seg.shape[0] == 0:
+                continue  # 空段(变长打包可含 0 长序列)
+            segt = seg.transpose(0, 1).unsqueeze(0)   # [1,D,Ti]
+            segt = F.pad(segt, (kernel - 1, 0))
+            y = F.conv1d(segt, w, groups=dim).transpose(1, 2)  # [Ti,D]
+            if bias is not None:
+                y = y + bias
+            if activation is not None:
+                act = str(activation).lower()
+                if act in ("silu", "swish"):
+                    y = F.silu(y)
+                elif act == "gelu":
+                    y = F.gelu(y)
+            outs.append(y)
+        if not outs:
+            return x, None
+        y = torch.cat(outs, dim=0).unsqueeze(0)  # [1,T,D]
+        if residual is not None:
+            y = y + residual
+        return (y, xt[..., -kernel:] if False else None)
+
     xt = x.transpose(1, 2).contiguous()  # [B,D,T]
     if initial_state is not None:
         keep = min(kernel - 1, initial_state.shape[-1])
@@ -194,3 +224,164 @@ def _dbg_linear(input, weight, bias=None):
 
 
 torch.nn.functional.linear = _dbg_linear
+
+# ---------------------------------------------------------------------------
+# 6. 临时取证:vision 特征提取的输入/输出形状(定位 0-dim image_features)
+# ---------------------------------------------------------------------------
+try:
+    from mindspeed_mm.fsdp.utils import register as _vd_reg
+
+    _orig_import_plugin = _vd_reg.import_plugin
+
+    def _vd_desc(x):
+        import torch as _t
+        if isinstance(x, _t.Tensor):
+            return f"T{tuple(x.shape)}/{str(x.dtype).split('.')[-1]}"
+        if isinstance(x, (list, tuple)):
+            return "[" + ",".join(_vd_desc(i) for i in x) + "]"
+        return type(x).__name__
+
+    def _wrapped_import_plugin(paths):
+        _orig_import_plugin(paths)
+        try:
+            import mindspeed_mm.fsdp.models.kimi_k3 as _kk
+            _cls = _kk.KimiK3ForConditionalGeneration
+            _orig_ext = _cls._extract_image_features
+
+            def _ext(self, pixel_values, grid_thws):
+                out = _orig_ext(self, pixel_values, grid_thws)
+                sys.stderr.write(
+                    f"[vdriver-shim] extract: pv={_vd_desc(pixel_values)} "
+                    f"grid={_vd_desc(grid_thws)} -> out={_vd_desc(out)}\n")
+                return out
+
+            _cls._extract_image_features = _ext
+
+            import mindspeed_mm.fsdp.models.kimi_k3.modeling_kimi_k3 as _kmod
+            _orig_pj = _kmod.PatchMergerMLPV2.forward
+
+            def _pj(self, x, *a, **k):
+                out = _orig_pj(self, x, *a, **k)
+                sys.stderr.write(
+                    f"[vdriver-shim] projector: in={_vd_desc(x)} -> out={_vd_desc(out)}\n")
+                return out
+
+            _kmod.PatchMergerMLPV2.forward = _pj
+
+            _orig_merge = _cls._merge_input_ids_with_image_features
+
+            def _merge(self, image_features, inputs_embeds, input_ids,
+                       attention_mask, labels=None):
+                sys.stderr.write(
+                    f"[vdriver-shim] merge: feats={_vd_desc(image_features)} "
+                    f"embeds={_vd_desc(inputs_embeds)} ids={_vd_desc(input_ids)} "
+                    f"mask={_vd_desc(attention_mask)}\n")
+                return _orig_merge(self, image_features, inputs_embeds,
+                                   input_ids, attention_mask, labels)
+
+            _cls._merge_input_ids_with_image_features = _merge
+        except Exception as _e:  # noqa: BLE001
+            sys.stderr.write(f"[vdriver-shim] probe skip: {_e}\n")
+
+    _vd_reg.import_plugin = _wrapped_import_plugin
+except Exception as _e:  # noqa: BLE001
+    sys.stderr.write(f"[vdriver-shim] register probe unavailable: {_e}\n")
+
+# ---------------------------------------------------------------------------
+# 7. 控制流关键算子 host 回退:比较/逻辑类算子的结果常驱动形状与索引
+#    (nonzero、布尔掩码赋值等)。vdriver 不模拟内核 → 设备上的比较结果恒为
+#    垃圾/0 → 形状类操作崩溃。此类算子的输入多为 host 源数据(input_ids/
+#    mask 等),host 计算结果精确;重算力算子(matmul/attention)不回退,
+#    数值仍为非目标。
+# ---------------------------------------------------------------------------
+_orig_nonzero = torch.Tensor.nonzero
+
+
+def _shim_nonzero(self, *args, **kwargs):
+    if self.device.type == "npu":
+        return _orig_nonzero(self.cpu(), *args, **kwargs).to(self.device)
+    return _orig_nonzero(self, *args, **kwargs)
+
+
+torch.Tensor.nonzero = _shim_nonzero
+torch.nonzero = lambda *a, **k: _shim_nonzero(*a, **k)
+
+_orig_setitem = torch.Tensor.__setitem__
+
+
+def _shim_setitem(self, key, value):
+    try:
+        return _orig_setitem(self, key, value)
+    except (IndexError, RuntimeError) as _e:
+        if (self.device.type == "npu" and isinstance(key, torch.Tensor)
+                and key.dtype == torch.bool):
+            cpu_idx = _orig_nonzero(key.cpu(), as_tuple=True)
+            _orig_setitem(self, cpu_idx, value)
+            return None
+        raise
+
+
+torch.Tensor.__setitem__ = _shim_setitem
+
+
+def _host_binary_wrapper(name):
+    _orig = getattr(torch.Tensor, name)
+
+    def _wrapped(self, other):
+        if self.device.type == "npu":
+            other_dev = getattr(other, "device", None)
+            if other_dev is None or other_dev.type == "npu":
+                other_c = other.cpu() if torch.is_tensor(other) else other
+                return getattr(_orig(self.cpu(), other_c) if not torch.is_tensor(other)
+                               else _orig(self.cpu(), other_c), "to")(self.device) \
+                    if False else _to_npu(_orig(self.cpu(), other_c), self.device)
+        return _orig(self, other)
+
+    return _wrapped
+
+
+def _to_npu(t, device):
+    return t if not torch.is_tensor(t) else t.to(device)
+
+
+for _op in ("__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__",
+            "__and__", "__or__", "__xor__"):
+    setattr(torch.Tensor, _op, _host_binary_wrapper(_op))
+
+
+def _to_npu_deep(out, device):
+    if torch.is_tensor(out):
+        return out.to(device)
+    if isinstance(out, (list, tuple)):
+        return type(out)(_to_npu_deep(o, device) for o in out) \
+            if isinstance(out, list) else tuple(_to_npu_deep(o, device) for o in out)
+    return out
+
+
+def _host_unary_wrapper(name):
+    _orig = getattr(torch.Tensor, name)
+
+    def _wrapped(self, *args, **kwargs):
+        if self.device.type == "npu" and self.numel() <= 1 << 22:  # ≤4M 元素
+            return _to_npu_deep(_orig(self.cpu(), *args, **kwargs), self.device)
+        return _orig(self, *args, **kwargs)
+
+    return _wrapped
+
+
+for _op in ("sum", "any", "all", "count_nonzero", "cumsum", "cumprod",
+            "argmax", "argmin", "amax", "amin", "median", "norm",
+            "topk", "sort", "argsort", "unique", "gather", "index_select",
+            "take_along_dim", "scatter_add", "scatter"):
+    if hasattr(torch.Tensor, _op):
+        setattr(torch.Tensor, _op, _host_unary_wrapper(_op))
+    if hasattr(torch, _op):
+        setattr(torch, _op, _host_unary_wrapper(_op))
+
+# 函数版补集(F.*):pad/where 等出现在控制流路径(cu_seqlens 构造等)
+import torch.nn.functional as _F
+
+for _fop in ("pad", "where", "clamp", "one_hot", "scatter",
+             "log_softmax", "softmax"):
+    if hasattr(_F, _fop):
+        setattr(_F, _fop, _host_unary_wrapper(_fop))
