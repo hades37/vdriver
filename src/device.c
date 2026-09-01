@@ -21,7 +21,7 @@
 /* ---------------- 日志 ---------------- */
 void vdriver_debug_log(const char *fmt, ...)
 {
-    static atomic_int enabled = ATOMIC_VAR_INIT(-1);
+    static atomic_int enabled = -1;
     if (atomic_load(&enabled) < 0) {
         const char *env = getenv("VDRIVER_LOG");
         atomic_store(&enabled, (env != NULL && env[0] == '1') ? 1 : 0);
@@ -127,20 +127,27 @@ DLLEXPORT drvError_t halGetChipCapability(uint32_t devId, struct halCapabilityIn
     return DRV_ERROR_NONE;
 }
 
+/* SoC 名首读缓存(M1 评审建议⑤):中途 setenv 不再漂移,变更 SoC 需重启进程 */
 DLLEXPORT drvError_t halGetSocVersion(uint32_t devId, char *socVersion, uint32_t len)
 {
+    static char cached_soc[sizeof(VDRIVER_DEF_SOC_NAME) + 32];
+    static atomic_int cached = -1; /* -1 未初始化;ATOMIC_VAR_INIT 在 C17 弃用,直写 */
     if (socVersion == NULL || len == 0U) {
         return DRV_ERROR_INVALID_VALUE;
     }
     (void)devId;
-    const char *env = getenv("VDRIVER_SOC");
-    const char *soc = (env != NULL && env[0] != '\0') ? env : VDRIVER_DEF_SOC_NAME;
-    if ((uint32_t)strlen(soc) >= len) {
+    if (atomic_load(&cached) < 0) {
+        const char *env = getenv("VDRIVER_SOC");
+        const char *soc = (env != NULL && env[0] != '\0') ? env : VDRIVER_DEF_SOC_NAME;
+        (void)snprintf(cached_soc, sizeof(cached_soc), "%s", soc);
+        atomic_store(&cached, 1);
+        vdriver_debug_log("halGetSocVersion: cache=%s", cached_soc);
+    }
+    if ((uint32_t)strlen(cached_soc) >= len) {
         vdriver_debug_log("halGetSocVersion: buffer too small len=%u", len);
         return DRV_ERROR_INVALID_VALUE;
     }
-    (void)strcpy(socVersion, soc);
-    vdriver_debug_log("halGetSocVersion: %s", soc);
+    (void)strcpy(socVersion, cached_soc);
     return DRV_ERROR_NONE;
 }
 

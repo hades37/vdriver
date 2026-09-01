@@ -1,0 +1,17 @@
+/* vdriver export whitelist (link-time version script).
+ * Contract prefixes: hal- / drv- / AICPUModel- / cmodelDrv- (wildcard export).
+ * Internal: vdriver- and sqe_interp- for tests; vdrv_stub- and others become local.
+ * Note: DLLEXPORT is an empty macro on Linux, so dynamic export is fully
+ * controlled by this file.
+ */
+VDRIVER_GNU {
+    global:
+        hal*;
+        drv*;
+        AICPUModel*;
+        cmodelDrv*;
+        vdriver*;
+        sqe_interp*;
+    local:
+        *;
+};

@@ -10,6 +10,7 @@ project(vdriver C CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # runtime 仓 include 路径(含 driver/ 下 ascend_hal*.h;与 9.1.0 安装包头逐字节一致,M0 已核验)
@@ -20,9 +21,12 @@ if(NOT EXISTS "${RUNTIME_INC}/driver/ascend_hal_base.h")
     message(FATAL_ERROR "RUNTIME_INC(${RUNTIME_INC}) 下未找到 driver/ascend_hal_base.h,请传 -DRUNTIME_INC=<runtime仓>/include")
 endif()
 
-# ---------- 强语义符号清单(在桩中被弱化,由 src/ 模块给出强定义) ----------
-# M1: 设备+内存;M2 追加 sqcq 系列(halSqCqAllocate/Free/Query/Config/SqTaskSend/
-# halCqReportIrqWait/Get/ReportRelease)
+# ---------- 强语义符号清单(在桩中被宏重命名,由 src/ 模块给出强定义) ----------
+# M1: 设备+内存;M2: SQ/CQ + 任务下发。
+# 有意留在桩的符号(h2c return-0 恰为所需语义,勿误判遗漏):
+#   halGetAPIVersion(返回 0 即可)、halHostUnregister 系列(VIRTUAL+flat 下被
+#   RUNTIME_WHEN_NO_VIRTUAL_MODEL_RETURN 短路)、halSupportFeature(空降级走 legacy)、
+#   halMemcpySumbit/Wait(禁止实现——空桩丢数据,缺席使 H2D 退化 SYNC,见方案 §3.3)。
 set(VDRIVER_STRONG_SYMBOLS
     halGetDeviceInfo
     halDeviceOpen
@@ -37,6 +41,14 @@ set(VDRIVER_STRONG_SYMBOLS
     halMemFree
     halMemcpy
     halHostRegister
+    halSqCqAllocate
+    halSqCqFree
+    halSqCqQuery
+    halSqCqConfig
+    halSqTaskSend
+    halCqReportIrqWait
+    halCqReportGet
+    halReportRelease
 )
 
 # ---------- h2c 桩基座:OBJECT 库,强语义符号经编译期宏重命名去重 ----------
@@ -56,7 +68,9 @@ add_library(vdriver SHARED
     $<TARGET_OBJECTS:hal_stub_obj>
     src/vdriver.c
     src/device.c
-    src/memory.c)
+    src/memory.c
+    src/sqcq.c
+    src/sqe_interp.cpp)
 
 target_include_directories(vdriver PRIVATE
     ${RUNTIME_INC}
@@ -65,6 +79,9 @@ target_include_directories(vdriver PRIVATE
 
 target_compile_options(vdriver PRIVATE -fstack-protector-strong)
 target_link_libraries(vdriver PRIVATE ${CMAKE_DL_LIBS} pthread)
+# 导出白名单:契约符号 hal*/drv* + 内部 vdriver*/sqe_interp*;vdrv_stub_* 收敛 local
+target_link_options(vdriver PRIVATE
+    "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/src/vdriver.map")
 
 # 关键:无 VERSION 属性 → CMake 自动 SONAME=libascend_hal.so,DT_NEEDED 按名命中(D2)
 set_target_properties(vdriver PROPERTIES
@@ -86,9 +103,19 @@ add_executable(test_m1_device_memory tests/test_m1_device_memory.cpp)
 target_include_directories(test_m1_device_memory PRIVATE
     ${RUNTIME_INC}/driver
     src/inc)
-target_link_libraries(test_m1_device_memory PRIVATE $<TARGET_FILE:vdriver> pthread)
+target_link_libraries(test_m1_device_memory PRIVATE vdriver pthread)
 add_dependencies(test_m1_device_memory vdriver)
 set_target_properties(test_m1_device_memory PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
+
+# M2:SQ/CQ 记账 + SQE 解释执行测试
+add_executable(test_m2_sqcq tests/test_m2_sqcq.cpp)
+target_include_directories(test_m2_sqcq PRIVATE
+    ${RUNTIME_INC}/driver
+    src/inc)
+target_link_libraries(test_m2_sqcq PRIVATE vdriver pthread)
+add_dependencies(test_m2_sqcq vdriver)
+set_target_properties(test_m2_sqcq PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
 
 # glibc 启动时固化搜索路径,必须在启动环境前置 vdriver 目录;
@@ -107,4 +134,9 @@ set_tests_properties(m0_load PROPERTIES
 add_test(NAME m1_device_memory
     COMMAND test_m1_device_memory)
 set_tests_properties(m1_device_memory PROPERTIES
+    ENVIRONMENT "LD_LIBRARY_PATH=${M0_TEST_LDLP}")
+
+add_test(NAME m2_sqcq
+    COMMAND test_m2_sqcq)
+set_tests_properties(m2_sqcq PROPERTIES
     ENVIRONMENT "LD_LIBRARY_PATH=${M0_TEST_LDLP}")
