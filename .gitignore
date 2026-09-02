@@ -13,3 +13,4 @@ Testing/
 .idea/
 *.swp
 .DS_Store
+tests/mm_kimi/logs/

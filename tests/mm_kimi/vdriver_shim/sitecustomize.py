@@ -109,11 +109,12 @@ _api.triton = _triton
 _triton.convolution = _convolution
 
 # ---------------------------------------------------------------------------
-# 3. 单卡(world_size=1)去 HCCL:HCCL 初始化需要真设备通信资源(vdriver 不建模)。
+# 3. 单卡(world_size=1)去 HCCL(VDRIVER_SINGLE_RANK_DIST=1 启用,默认开;
+#    PV 仿真下可设 0 尝试原生 hccl):HCCL 初始化需要真设备通信资源(vdriver 不建模)。
 #    强制 gloo 建组,并把单 rank 集合通信短路为恒等(broadcast/all_reduce 等在
 #    world_size=1 时数学上即恒等;张量留在 NPU 上,不做跨进程搬运)。
 # ---------------------------------------------------------------------------
-if os.environ.get("VDRIVER_SINGLE_RANK_DIST", "1") == "1":
+if os.environ.get("VDRIVER_SINGLE_RANK_DIST", "1") == "1":  # PV 仿真同样不支持 hccl(err 19),实测单卡也需 gloo
     import torch  # noqa: E402
 
     def _world_size() -> int:
@@ -180,13 +181,15 @@ if os.environ.get("VDRIVER_SINGLE_RANK_DIST", "1") == "1":
 import torch  # noqa: E402
 from torch.distributed.tensor import _random as _dt_random  # noqa: E402
 
+_PV = os.environ.get("VDRIVER_PV_MODE") == "1"
 
 def _noop_set_device_state(self, rng_state):
     sys.stderr.write("[vdriver-shim] DTensor RNG set_device_state 跳过(npu set_state 不兼容)\n")
     return None
 
 
-_dt_random.OffsetBasedRNGTracker._set_device_state = _noop_set_device_state
+if not _PV:
+    _dt_random.OffsetBasedRNGTracker._set_device_state = _noop_set_device_state
 
 # torch.npu.set_rng_state(torch_npu.npu 模块属性)→ default_generator.set_state
 # 拒绝 CPU 格式状态;DTensor/fork_rng 走此路径。容错跳过(RNG 保真非目标)。
@@ -201,7 +204,8 @@ def _safe_npu_set_rng_state(new_state, device=None):
         return None
 
 
-torch.npu.set_rng_state = _safe_npu_set_rng_state
+if not _PV:
+    torch.npu.set_rng_state = _safe_npu_set_rng_state
 
 # ---------------------------------------------------------------------------
 # 5. 临时取证:抓 161002 matmul 失败的具体形状(定位后移除)
@@ -303,8 +307,11 @@ def _shim_nonzero(self, *args, **kwargs):
     return _orig_nonzero(self, *args, **kwargs)
 
 
-torch.Tensor.nonzero = _shim_nonzero
-torch.nonzero = lambda *a, **k: _shim_nonzero(*a, **k)
+if _PV:
+    sys.stderr.write("[vdriver-shim] PV 模式:host 回退算子不启用(真内核执行)\n")
+else:
+    torch.Tensor.nonzero = _shim_nonzero
+    torch.nonzero = lambda *a, **k: _shim_nonzero(*a, **k)
 
 _orig_setitem = torch.Tensor.__setitem__
 
@@ -321,7 +328,8 @@ def _shim_setitem(self, key, value):
         raise
 
 
-torch.Tensor.__setitem__ = _shim_setitem
+if not _PV:
+    torch.Tensor.__setitem__ = _shim_setitem
 
 
 def _host_binary_wrapper(name):
@@ -344,9 +352,10 @@ def _to_npu(t, device):
     return t if not torch.is_tensor(t) else t.to(device)
 
 
-for _op in ("__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__",
-            "__and__", "__or__", "__xor__"):
-    setattr(torch.Tensor, _op, _host_binary_wrapper(_op))
+if not _PV:
+    for _op in ("__eq__", "__ne__", "__lt__", "__le__", "__gt__", "__ge__",
+                "__and__", "__or__", "__xor__"):
+        setattr(torch.Tensor, _op, _host_binary_wrapper(_op))
 
 
 def _to_npu_deep(out, device):
@@ -373,6 +382,8 @@ for _op in ("sum", "any", "all", "count_nonzero", "cumsum", "cumprod",
             "argmax", "argmin", "amax", "amin", "median", "norm",
             "topk", "sort", "argsort", "unique", "gather", "index_select",
             "take_along_dim", "scatter_add", "scatter"):
+    if _PV:
+        break
     if hasattr(torch.Tensor, _op):
         setattr(torch.Tensor, _op, _host_unary_wrapper(_op))
     if hasattr(torch, _op):
@@ -381,7 +392,8 @@ for _op in ("sum", "any", "all", "count_nonzero", "cumsum", "cumprod",
 # 函数版补集(F.*):pad/where 等出现在控制流路径(cu_seqlens 构造等)
 import torch.nn.functional as _F
 
-for _fop in ("pad", "where", "clamp", "one_hot", "scatter",
-             "log_softmax", "softmax"):
-    if hasattr(_F, _fop):
-        setattr(_F, _fop, _host_unary_wrapper(_fop))
+if not _PV:
+    for _fop in ("pad", "where", "clamp", "one_hot", "scatter",
+                 "log_softmax", "softmax"):
+        if hasattr(_F, _fop):
+            setattr(_F, _fop, _host_unary_wrapper(_fop))
