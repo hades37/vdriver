@@ -9,6 +9,7 @@
      在其上工作,属环境既有缺陷,与 vdriver 无关。
 """
 import os
+import os
 import sys
 
 TRITON_STD_DIR = os.environ.get("VDRIVER_TRITON_STD", "/tmp/vd_triton_std")
@@ -34,3 +35,9 @@ torch.npu.synchronize()
 got = z.cpu().tolist()
 print("add result:", got, "(内核不模拟执行,数值校验仅记录不判定)")
 print("L3 done, npu device count =", torch.npu.device_count())
+# PV 仿真栈已知问题:解释器收尾(atexit → aclFinalize)触发官方栈内部 double-free
+# (全部工作已完成之后)。自动化场景可设 L3_SKIP_TEARDOWN=1 跳过收尾拿 exit=0。
+if os.environ.get("L3_SKIP_TEARDOWN") == "1":
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)

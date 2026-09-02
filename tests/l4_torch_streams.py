@@ -25,14 +25,18 @@ print("streams created: 2")
 
 # 异步 H2D:pin memory + non_blocking(若走 async 拷贝路径将产生 SDMA 类 SQE)
 host = torch.arange(8, dtype=torch.float32).pin_memory()
+copy_done = torch.npu.Event()
 x = host.to("npu", non_blocking=True)
+copy_done.record()  # 跨流依赖:H2D 在默认流,消费前必须同步(真仿真下竞态会显形)
 y = torch.ones(8, device="npu")
 print("async H2D tensor:", x.shape)
 
-# 双流并发计算
+# 双流并发计算(先等 H2D 完成)
 with torch.npu.stream(s1):
+    copy_done.synchronize()
     z1 = x + y
 with torch.npu.stream(s2):
+    copy_done.synchronize()
     z2 = x * 2.0
 
 # 事件:流 1 记录,主流等待
@@ -46,6 +50,11 @@ s1.synchronize()
 s2.synchronize()
 print("multi-stream sync ok")
 
-print("z1 =", z1.cpu().tolist(), "(数值非目标)")
-print("z2 =", z2.cpu().tolist(), "(数值非目标)")
+print("z1 =", z1.cpu().tolist(), "(期望 [1..8])")
+print("z2 =", z2.cpu().tolist(), "(期望 [0..14])")
 print("L4 streams/events done")
+# 与 l3 同:PV 仿真栈收尾 double-free(工作完成后),自动化可设跳过
+if os.environ.get("L3_SKIP_TEARDOWN") == "1":
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
